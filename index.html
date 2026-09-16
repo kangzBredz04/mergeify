@@ -3,56 +3,169 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SQL Converter - Insert to Call Merge</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta
+      name="description"
+      content="Converter SQL INSERT INTO menjadi Stored Procedure CALL MERGE MWCONFIG."
+    />
+    <title>SQL Merge Converter | MWCONFIG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css?v=2.0.0" />
   </head>
   <body>
-    <header>
-      <h1>SQL Merge Converter</h1>
-      <div class="controls">
-        <select id="conversionType">
-          <option value="MAPPING_COMBINE">MAPPING_COMBINE</option>
-          <option value="PARAM_MAP">PARAM_MAP</option>
-          <option value="ADAPTOR">ADAPTOR</option>
-          <option value="ADAPTOR_CODEX">ADAPTOR_CODEX</option>
-          <option value="ADAPTOR_PARAM">ADAPTOR_PARAM</option>
-          <option value="CHARGES">CHARGES</option>
-          <option value="CLIENT">CLIENT</option>
-          <option value="CLIENT_TARGET">CLIENT_TARGET</option>
-          <option value="DEV_TELLER_MAP">DEV_TELLER_MAP</option>
-          <option value="DTREE">DTREE</option>
-          <option value="ERROR_MAP">ERROR_MAP</option>
-          <option value="ROUTING_TABLE">ROUTING_TABLE</option>
-          <option value="SERVER_PORT">SERVER_PORT</option>
-        </select>
-        <button onclick="toggleLayout()">
-          Ganti Layout (Kiri/Kanan &lt;-&gt; Atas/Bawah)
-        </button>
-      </div>
-    </header>
+    <div class="page-shell">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span>&lt;/&gt;</span>
+          </div>
+          <div>
+            <p class="eyebrow">MWCONFIG TOOLS</p>
+            <h1>SQL Merge Converter</h1>
+            <p class="subtitle">
+              Ubah perintah <code>INSERT INTO</code> menjadi
+              <code>CALL MERGE</code> dengan cepat.
+            </p>
+          </div>
+        </div>
 
-    <div class="workspace row-layout" id="workspace">
-      <div class="panel">
-        <div class="panel-header">Data Insert (Input)</div>
-        <textarea
-          id="inputSql"
-          placeholder="Paste query INSERT INTO di sini..."
-        ></textarea>
-      </div>
-      <div class="panel">
-        <div class="panel-header">Hasil Convert (Call Merge)</div>
-        <textarea
-          id="outputSql"
-          readonly
-          placeholder="Hasil convert akan muncul di sini..."
-        ></textarea>
-      </div>
+        <div class="header-actions">
+          <label class="select-field" for="tableType">
+            <span>Jenis tabel</span>
+            <select id="tableType">
+              <option value="ADAPTOR">ADAPTOR</option>
+              <option value="ADAPTOR_CODEX">ADAPTOR_CODEX</option>
+              <option value="ADAPTOR_PARAM">ADAPTOR_PARAM</option>
+              <option value="CHARGES">CHARGES</option>
+              <option value="CLIENT">CLIENT</option>
+              <option value="CLIENT_TARGET">CLIENT_TARGET</option>
+              <option value="DEV_TELLER_MAP">DEV_TELLER_MAP</option>
+              <option value="DTREE">DTREE</option>
+              <option value="ERROR_MAP">ERROR_MAP</option>
+              <option value="MAPPING_COMBINE" selected>MAPPING_COMBINE</option>
+              <option value="PARAM_MAP">PARAM_MAP</option>
+              <option value="ROUTING_TABLE">ROUTING_TABLE</option>
+              <option value="SERVER_PORT">SERVER_PORT</option>
+            </select>
+          </label>
+
+          <button
+            id="layoutButton"
+            class="button button-secondary"
+            type="button"
+            aria-pressed="false"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5h6v14H4zM14 5h6v14h-6z" />
+            </svg>
+            <span>Ganti Layout</span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="info-strip" aria-label="Informasi converter">
+          <div class="info-icon">i</div>
+          <div class="info-content">
+            <p id="tableHint">
+              Mode MAPPING_COMBINE menerima INSERT untuk tabel MAPPING,
+              MAPPING_GROUP, dan MAPPING_GROUP_LINE sekaligus.
+            </p>
+            <div class="feature-badges" aria-label="Kemampuan parser">
+              <span>Multi INSERT</span>
+              <span>Multi-row VALUES</span>
+              <span>String berisi koma</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="editorGrid" class="editor-grid">
+          <article class="editor-card">
+            <div class="editor-header">
+              <div>
+                <span class="step-number">01</span>
+                <h2>SQL INSERT</h2>
+              </div>
+              <button id="clearButton" class="text-button" type="button">
+                Bersihkan
+              </button>
+            </div>
+            <textarea
+              id="inputSql"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="Tempel satu atau beberapa perintah INSERT INTO di sini.&#10;&#10;Multi-row juga didukung:&#10;INSERT INTO MWCONFIG.MAPPING (...) VALUES&#10;  (...),&#10;  (...);"
+              aria-label="SQL INSERT input"
+            ></textarea>
+            <div class="editor-footer">
+              <span id="inputStats">0 karakter · 0 statement</span>
+            </div>
+          </article>
+
+          <article class="editor-card result-card">
+            <div class="editor-header">
+              <div>
+                <span class="step-number">02</span>
+                <h2>CALL MERGE</h2>
+              </div>
+              <button
+                id="copyButton"
+                class="text-button"
+                type="button"
+                disabled
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 8h11v11H8zM5 16H4V5h11v1" />
+                </svg>
+                <span>Salin</span>
+              </button>
+            </div>
+            <textarea
+              id="outputSql"
+              readonly
+              spellcheck="false"
+              placeholder="Hasil konversi akan tampil di sini..."
+              aria-label="Hasil CALL MERGE"
+            ></textarea>
+            <div class="editor-footer">
+              <span id="outputStats">Belum ada hasil</span>
+            </div>
+          </article>
+        </section>
+
+        <div
+          id="feedback"
+          class="feedback"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+        <div class="convert-area">
+          <button
+            id="convertButton"
+            class="button button-primary"
+            type="button"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 7h11l-3-3M17 17H6l3 3M18 7l-3 3M6 17l3-3" />
+            </svg>
+            <span>Convert Data</span>
+          </button>
+          <p>Shortcut: <kbd>Ctrl</kbd> + <kbd>Enter</kbd></p>
+        </div>
+      </main>
+
+      <footer>
+        <p>SQL Utility • Internal Middleware Tool</p>
+        <span>Semua proses dilakukan langsung di browser.</span>
+      </footer>
     </div>
 
-    <div class="convert-btn-container">
-      <button onclick="processConversion()">Convert Data</button>
-    </div>
-
-    <script src="script.js"></script>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="script.js?v=2.0.0"></script>
   </body>
 </html>
