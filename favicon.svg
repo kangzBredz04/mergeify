@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">MazWay Converter</title>
+  <desc id="desc">Ikon converter dengan dua arah panah berwarna kuning pada latar biru.</desc>
+  <defs>
+    <linearGradient id="background" x1="70" y1="55" x2="445" y2="466" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0067B9"/>
+      <stop offset="1" stop-color="#003663"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="126" y1="148" x2="388" y2="362" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD34E"/>
+      <stop offset="1" stop-color="#F39A19"/>
+    </linearGradient>
+    <filter id="shadow" x="70" y="90" width="372" height="350" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#001F3A" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="118" fill="url(#background)"/>
+  <circle cx="438" cy="80" r="92" fill="#FFFFFF" opacity=".055"/>
+  <circle cx="66" cy="454" r="126" fill="#20A4F3" opacity=".09"/>
+  <g filter="url(#shadow)">
+    <rect x="102" y="108" width="308" height="296" rx="74" fill="#FFFFFF" fill-opacity=".10" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="4"/>
+    <path d="M142 198h181l-37-37 30-30 88 88-88 88-30-30 37-37H142v-42Z" fill="url(#accent)"/>
+    <path d="M370 314H189l37 37-30 30-88-88 88-88 30 30-37 37h181v42Z" fill="#FFFFFF"/>
+  </g>
+</svg>

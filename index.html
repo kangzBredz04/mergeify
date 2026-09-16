@@ -5,30 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Converter SQL INSERT INTO menjadi Stored Procedure CALL MERGE MWCONFIG."
+      content="SQL Merge Converter untuk membantu proses konversi data MWCONFIG."
     />
-    <title>SQL Merge Converter | MWCONFIG</title>
+    <title>SQL Merge Converter</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./app-icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=2.0.0" />
+    <link rel="stylesheet" href="./style.css?v=3.0.0" />
   </head>
   <body>
     <div class="page-shell">
       <header class="app-header">
         <div class="brand">
-          <div class="brand-mark" aria-hidden="true">
-            <span>&lt;/&gt;</span>
-          </div>
+          <img class="brand-mark" src="./favicon.svg" alt="MazWay Converter" />
           <div>
-            <p class="eyebrow">MWCONFIG TOOLS</p>
+            <p class="eyebrow">MAZWAY DEVELOPER TOOL</p>
             <h1>SQL Merge Converter</h1>
             <p class="subtitle">
-              Ubah perintah <code>INSERT INTO</code> menjadi
-              <code>CALL MERGE</code> dengan cepat.
+              Konversi data SQL dengan cepat, rapi, dan aman.
             </p>
           </div>
         </div>
@@ -68,41 +67,35 @@
       </header>
 
       <main>
-        <section class="info-strip" aria-label="Informasi converter">
-          <div class="info-icon">i</div>
-          <div class="info-content">
-            <p id="tableHint">
-              Mode MAPPING_COMBINE menerima INSERT untuk tabel MAPPING,
-              MAPPING_GROUP, dan MAPPING_GROUP_LINE sekaligus.
-            </p>
-            <div class="feature-badges" aria-label="Kemampuan parser">
-              <span>Multi INSERT</span>
-              <span>Multi-row VALUES</span>
-              <span>String berisi koma</span>
-            </div>
-          </div>
-        </section>
-
         <section id="editorGrid" class="editor-grid">
           <article class="editor-card">
             <div class="editor-header">
               <div>
                 <span class="step-number">01</span>
-                <h2>SQL INSERT</h2>
+                <div class="editor-title">
+                  <h2>Data Input</h2>
+                  <p>Masukkan data yang ingin dikonversi</p>
+                </div>
               </div>
               <button id="clearButton" class="text-button" type="button">
-                Bersihkan
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" />
+                </svg>
+                <span>Bersihkan</span>
               </button>
             </div>
             <textarea
               id="inputSql"
               spellcheck="false"
               autocomplete="off"
-              placeholder="Tempel satu atau beberapa perintah INSERT INTO di sini.&#10;&#10;Multi-row juga didukung:&#10;INSERT INTO MWCONFIG.MAPPING (...) VALUES&#10;  (...),&#10;  (...);"
-              aria-label="SQL INSERT input"
+              placeholder="Masukkan data yang ingin dikonversi di sini..."
+              aria-label="Data yang ingin dikonversi"
             ></textarea>
             <div class="editor-footer">
-              <span id="inputStats">0 karakter · 0 statement</span>
+              <span id="inputStats">0 karakter · siap menerima data</span>
+              <span class="privacy-label"
+                ><span class="privacy-dot"></span> Diproses di browser</span
+              >
             </div>
           </article>
 
@@ -110,7 +103,10 @@
             <div class="editor-header">
               <div>
                 <span class="step-number">02</span>
-                <h2>CALL MERGE</h2>
+                <div class="editor-title">
+                  <h2>Hasil Konversi</h2>
+                  <p>Hasil akan dibuat secara otomatis</p>
+                </div>
               </div>
               <button
                 id="copyButton"
@@ -129,7 +125,7 @@
               readonly
               spellcheck="false"
               placeholder="Hasil konversi akan tampil di sini..."
-              aria-label="Hasil CALL MERGE"
+              aria-label="Hasil konversi"
             ></textarea>
             <div class="editor-footer">
               <span id="outputStats">Belum ada hasil</span>
@@ -160,12 +156,12 @@
       </main>
 
       <footer>
-        <p>SQL Utility • Internal Middleware Tool</p>
-        <span>Semua proses dilakukan langsung di browser.</span>
+        <p>Copyright &copy; MazWay 2026</p>
+        <span>SQL Merge Converter • Developer Utility</span>
       </footer>
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=2.0.0"></script>
+    <script src="script.js?v=3.0.0"></script>
   </body>
 </html>

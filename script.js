@@ -1,10 +1,9 @@
 "use strict";
 
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 
 const elements = {
   tableType: document.getElementById("tableType"),
-  tableHint: document.getElementById("tableHint"),
   editorGrid: document.getElementById("editorGrid"),
   inputSql: document.getElementById("inputSql"),
   outputSql: document.getElementById("outputSql"),
@@ -29,15 +28,6 @@ const AUDIT_COLUMNS = new Set([
   "UPDATED_BY",
   "UPDATED_AT",
 ]);
-
-const TABLE_HINTS = {
-  MAPPING_COMBINE:
-    "Mode MAPPING_COMBINE menerima MAPPING, MAPPING_GROUP, dan MAPPING_GROUP_LINE. Setiap tuple VALUES menghasilkan satu CALL.",
-  PARAM_MAP:
-    "Mode PARAM_MAP menggunakan GROUP, NAME, VALUE, SEQ, dan DESCRIPTION. Setiap tuple VALUES menghasilkan satu CALL.",
-  DEFAULT:
-    "Kolom audit otomatis diabaikan. Setiap tuple pada VALUES (...), (...) akan menghasilkan satu CALL MERGE.",
-};
 
 let toastTimer;
 
@@ -225,7 +215,7 @@ function parseInsertStatements(sql) {
 
     if (!tableReference || sql[cursor] !== "(") {
       throw new Error(
-        `Daftar kolom tidak ditemukan setelah INSERT ke ${tableReference || "tabel"}.`,
+        `Daftar kolom tidak ditemukan pada data ${tableReference || "tabel"}.`,
       );
     }
 
@@ -265,7 +255,9 @@ function parseInsertStatements(sql) {
   }
 
   if (!statements.length) {
-    throw new Error("Tidak ditemukan perintah INSERT INTO yang valid.");
+    throw new Error(
+      "Format data tidak dikenali. Periksa kembali data yang dimasukkan.",
+    );
   }
 
   return statements;
@@ -439,7 +431,6 @@ function countInsertStatements(value) {
 
 function updateInputStats() {
   const value = elements.inputSql.value;
-  const insertCount = countInsertStatements(value);
   let rowCount = 0;
 
   // Saat SQL sudah lengkap, hitung jumlah tuple VALUES secara aktual.
@@ -452,8 +443,10 @@ function updateInputStats() {
     }
   }
 
-  const rowLabel = rowCount ? ` · ${rowCount} baris data` : "";
-  elements.inputStats.textContent = `${value.length.toLocaleString("id-ID")} karakter · ${insertCount} INSERT${rowLabel}`;
+  const dataLabel = rowCount
+    ? `${rowCount} data terdeteksi`
+    : "siap menerima data";
+  elements.inputStats.textContent = `${value.length.toLocaleString("id-ID")} karakter · ${dataLabel}`;
 }
 
 function showFeedback(message = "", type = "error") {
@@ -475,19 +468,16 @@ function handleConvert() {
   const sql = elements.inputSql.value.trim();
   if (!sql) {
     elements.inputSql.focus();
-    showFeedback("Tempelkan data INSERT terlebih dahulu.");
+    showFeedback("Masukkan data yang ingin dikonversi terlebih dahulu.");
     return;
   }
 
   try {
     const result = convertSql(sql, elements.tableType.value);
     elements.outputSql.value = result.output;
-    elements.outputStats.textContent = `${result.count} CALL dari ${result.insertCount} INSERT`;
+    elements.outputStats.textContent = `${result.count} hasil berhasil dibuat`;
     elements.copyButton.disabled = false;
-    showFeedback(
-      `Konversi berhasil: ${result.count} statement diproses.`,
-      "success",
-    );
+    showFeedback(`${result.count} data berhasil dikonversi.`, "success");
     showToast("Data berhasil dikonversi");
   } catch (error) {
     elements.outputSql.value = "";
@@ -530,19 +520,12 @@ function toggleLayout() {
   );
 }
 
-function updateTableHint() {
-  const selectedTable = elements.tableType.value;
-  elements.tableHint.textContent =
-    TABLE_HINTS[selectedTable] || TABLE_HINTS.DEFAULT;
-  showFeedback();
-}
-
 elements.inputSql.addEventListener("input", updateInputStats);
 elements.convertButton.addEventListener("click", handleConvert);
 elements.copyButton.addEventListener("click", copyOutput);
 elements.clearButton.addEventListener("click", clearEditors);
 elements.layoutButton.addEventListener("click", toggleLayout);
-elements.tableType.addEventListener("change", updateTableHint);
+elements.tableType.addEventListener("change", () => showFeedback());
 
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -553,7 +536,6 @@ document.addEventListener("keydown", (event) => {
 
 document.documentElement.dataset.appVersion = APP_VERSION;
 updateInputStats();
-updateTableHint();
 
 // Membuat fungsi inti dapat diuji di Node.js tanpa mengubah perilaku browser.
 if (typeof module !== "undefined" && module.exports) {
