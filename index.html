@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQL Converter - Insert to Call Merge</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>SQL Merge Converter</h1>
+      <div class="controls">
+        <select id="conversionType">
+          <option value="MAPPING_COMBINE">MAPPING_COMBINE</option>
+          <option value="PARAM_MAP">PARAM_MAP</option>
+          <option value="ADAPTOR">ADAPTOR</option>
+          <option value="ADAPTOR_CODEX">ADAPTOR_CODEX</option>
+          <option value="ADAPTOR_PARAM">ADAPTOR_PARAM</option>
+          <option value="CHARGES">CHARGES</option>
+          <option value="CLIENT">CLIENT</option>
+          <option value="CLIENT_TARGET">CLIENT_TARGET</option>
+          <option value="DEV_TELLER_MAP">DEV_TELLER_MAP</option>
+          <option value="DTREE">DTREE</option>
+          <option value="ERROR_MAP">ERROR_MAP</option>
+          <option value="ROUTING_TABLE">ROUTING_TABLE</option>
+          <option value="SERVER_PORT">SERVER_PORT</option>
+        </select>
+        <button onclick="toggleLayout()">
+          Ganti Layout (Kiri/Kanan &lt;-&gt; Atas/Bawah)
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace row-layout" id="workspace">
+      <div class="panel">
+        <div class="panel-header">Data Insert (Input)</div>
+        <textarea
+          id="inputSql"
+          placeholder="Paste query INSERT INTO di sini..."
+        ></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Hasil Convert (Call Merge)</div>
+        <textarea
+          id="outputSql"
+          readonly
+          placeholder="Hasil convert akan muncul di sini..."
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="convert-btn-container">
+      <button onclick="processConversion()">Convert Data</button>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

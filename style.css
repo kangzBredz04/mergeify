@@ -1,0 +1,139 @@
+/* BTN Color Palette */
+:root {
+  --btn-blue: #004b87;
+  --btn-yellow: #ffc000;
+  --bg-color: #f4f7f6;
+  --text-dark: #333333;
+  --border-color: #cccccc;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  background-color: var(--btn-blue);
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 4px solid var(--btn-yellow);
+}
+
+header h1 {
+  font-size: 1.5rem;
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+select,
+button {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+select {
+  background-color: white;
+  color: var(--btn-blue);
+  border: 1px solid var(--border-color);
+  outline: none;
+}
+
+button {
+  background-color: var(--btn-yellow);
+  color: var(--btn-blue);
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #e6ad00;
+}
+
+/* Layout Container */
+.workspace {
+  display: flex;
+  flex: 1;
+  padding: 20px;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Default: Side by Side (Row) */
+.workspace.row-layout {
+  flex-direction: row;
+}
+
+/* Toggled: Top and Bottom (Column) */
+.workspace.col-layout {
+  flex-direction: column;
+}
+
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border-top: 3px solid var(--btn-blue);
+}
+
+.panel-header {
+  background-color: #eef2f5;
+  padding: 10px 15px;
+  font-weight: bold;
+  color: var(--btn-blue);
+  border-bottom: 1px solid var(--border-color);
+}
+
+textarea {
+  flex: 1;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  resize: none;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  outline: none;
+}
+
+.convert-btn-container {
+  text-align: center;
+  padding: 10px;
+  background-color: var(--bg-color);
+}
+
+.convert-btn-container button {
+  padding: 10px 30px;
+  font-size: 16px;
+  background-color: var(--btn-blue);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.convert-btn-container button:hover {
+  background-color: #003666;
+}
