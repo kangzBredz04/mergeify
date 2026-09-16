@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "3.0.0";
+const APP_VERSION = "4.1.0";
 
 const elements = {
   tableType: document.getElementById("tableType"),
@@ -12,9 +12,10 @@ const elements = {
   feedback: document.getElementById("feedback"),
   convertButton: document.getElementById("convertButton"),
   layoutButton: document.getElementById("layoutButton"),
+  layoutModeLabel: document.getElementById("layoutModeLabel"),
   clearButton: document.getElementById("clearButton"),
   copyButton: document.getElementById("copyButton"),
-  toast: document.getElementById("toast"),
+  toast: document.getElementById("toast")
 };
 
 const AUDIT_COLUMNS = new Set([
@@ -26,7 +27,7 @@ const AUDIT_COLUMNS = new Set([
   "CREATED_DATE",
   "MODIFIED_DATE",
   "UPDATED_BY",
-  "UPDATED_AT",
+  "UPDATED_AT"
 ]);
 
 let toastTimer;
@@ -142,11 +143,7 @@ function findKeywordOutsideQuotes(text, keyword, startIndex = 0) {
   const upperKeyword = keyword.toUpperCase();
   let quote = null;
 
-  for (
-    let index = startIndex;
-    index <= text.length - keyword.length;
-    index += 1
-  ) {
+  for (let index = startIndex; index <= text.length - keyword.length; index += 1) {
     const char = text[index];
     const next = text[index + 1];
 
@@ -181,8 +178,7 @@ function parseValueTuples(text, startIndex) {
   // Contoh: VALUES ('A', 1), ('B', 2), ('C', 3)
   while (index < text.length && text[index] === "(") {
     const closeIndex = findMatchingParenthesis(text, index);
-    if (closeIndex === -1)
-      throw new Error("Tanda kurung VALUES tidak lengkap.");
+    if (closeIndex === -1) throw new Error("Tanda kurung VALUES tidak lengkap.");
 
     tuples.push(splitSqlAware(text.slice(index + 1, closeIndex)));
     index = skipWhitespace(text, closeIndex + 1);
@@ -191,8 +187,7 @@ function parseValueTuples(text, startIndex) {
     index = skipWhitespace(text, index + 1);
   }
 
-  if (!tuples.length)
-    throw new Error("VALUES (...) tidak ditemukan atau formatnya tidak valid.");
+  if (!tuples.length) throw new Error("VALUES (...) tidak ditemukan atau formatnya tidak valid.");
   return { tuples, endIndex: index };
 }
 
@@ -214,32 +209,22 @@ function parseInsertStatements(sql) {
     cursor = skipWhitespace(sql, cursor);
 
     if (!tableReference || sql[cursor] !== "(") {
-      throw new Error(
-        `Daftar kolom tidak ditemukan pada data ${tableReference || "tabel"}.`,
-      );
+      throw new Error(`Daftar kolom tidak ditemukan pada data ${tableReference || "tabel"}.`);
     }
 
     const columnsEnd = findMatchingParenthesis(sql, cursor);
-    if (columnsEnd === -1)
-      throw new Error(
-        `Tanda kurung kolom untuk ${tableReference} tidak lengkap.`,
-      );
+    if (columnsEnd === -1) throw new Error(`Tanda kurung kolom untuk ${tableReference} tidak lengkap.`);
 
-    const columns = splitSqlAware(sql.slice(cursor + 1, columnsEnd)).map(
-      normalizeIdentifier,
-    );
+    const columns = splitSqlAware(sql.slice(cursor + 1, columnsEnd)).map(normalizeIdentifier);
     const valuesIndex = findKeywordOutsideQuotes(sql, "VALUES", columnsEnd + 1);
 
-    if (valuesIndex === -1)
-      throw new Error(
-        `Keyword VALUES untuk ${tableReference} tidak ditemukan.`,
-      );
+    if (valuesIndex === -1) throw new Error(`Keyword VALUES untuk ${tableReference} tidak ditemukan.`);
 
     const parsedValues = parseValueTuples(sql, valuesIndex + "VALUES".length);
     parsedValues.tuples.forEach((values) => {
       if (columns.length !== values.length) {
         throw new Error(
-          `${tableReference}: jumlah kolom (${columns.length}) tidak sama dengan jumlah nilai (${values.length}).`,
+          `${tableReference}: jumlah kolom (${columns.length}) tidak sama dengan jumlah nilai (${values.length}).`
         );
       }
 
@@ -247,7 +232,7 @@ function parseInsertStatements(sql) {
         tableReference,
         tableName: getBaseTableName(tableReference),
         columns,
-        values: values.map((value) => value.trim()),
+        values: values.map((value) => value.trim())
       });
     });
 
@@ -255,9 +240,7 @@ function parseInsertStatements(sql) {
   }
 
   if (!statements.length) {
-    throw new Error(
-      "Format data tidak dikenali. Periksa kembali data yang dimasukkan.",
-    );
+    throw new Error("Format data tidak dikenali. Periksa kembali data yang dimasukkan.");
   }
 
   return statements;
@@ -287,11 +270,7 @@ function unquoteSqlString(value) {
 }
 
 function quoteProcedureValue(value, options = {}) {
-  const {
-    quoteNull = false,
-    emptyAsNull = false,
-    alwaysQuote = false,
-  } = options;
+  const { quoteNull = false, emptyAsNull = false, alwaysQuote = false } = options;
 
   if (isSqlNull(value)) return quoteNull ? "'NULL'" : "NULL";
   if (emptyAsNull && isEmptySqlString(value)) return "NULL";
@@ -308,9 +287,7 @@ function quoteProcedureValue(value, options = {}) {
 function requireColumns(row, columns, tableName) {
   const missing = columns.filter((column) => !(column in row));
   if (missing.length) {
-    throw new Error(
-      `${tableName}: kolom wajib tidak ditemukan: ${missing.join(", ")}.`,
-    );
+    throw new Error(`${tableName}: kolom wajib tidak ditemukan: ${missing.join(", ")}.`);
   }
 }
 
@@ -328,25 +305,16 @@ function convertMappingCombine(statement) {
     return formatCall("MERGE_MAPPING", [
       quoteProcedureValue(row.ID),
       quoteProcedureValue(row.DESCRIPTION, { emptyAsNull: true }),
-      quoteProcedureValue(row.MODULE),
+      quoteProcedureValue(row.MODULE)
     ]);
   }
 
   if (statement.tableName === "MAPPING_GROUP") {
-    const columns = [
-      "MAPPING_ID",
-      "ID",
-      "SOURCE",
-      "TARGET",
-      "INCLUDE_MAPPING_ID",
-      "INCLUDE_ID",
-    ];
+    const columns = ["MAPPING_ID", "ID", "SOURCE", "TARGET", "INCLUDE_MAPPING_ID", "INCLUDE_ID"];
     requireColumns(row, columns, "MAPPING_GROUP");
     return formatCall(
       "MERGE_MAPPING_GROUP",
-      columns.map((column) =>
-        quoteProcedureValue(row[column], { alwaysQuote: true }),
-      ),
+      columns.map((column) => quoteProcedureValue(row[column], { alwaysQuote: true }))
     );
   }
 
@@ -355,25 +323,18 @@ function convertMappingCombine(statement) {
     requireColumns(row, columns, "MAPPING_GROUP_LINE");
     return formatCall(
       "MERGE_MAPPING_GROUP_LINE",
-      columns.map((column) =>
-        quoteProcedureValue(row[column], {
-          alwaysQuote: true,
-          quoteNull: true,
-        }),
-      ),
+      columns.map((column) => quoteProcedureValue(row[column], { alwaysQuote: true, quoteNull: true }))
     );
   }
 
   throw new Error(
-    `Mode MAPPING_COMBINE tidak menerima tabel ${statement.tableName}. Gunakan MAPPING, MAPPING_GROUP, atau MAPPING_GROUP_LINE.`,
+    `Mode MAPPING_COMBINE tidak menerima tabel ${statement.tableName}. Gunakan MAPPING, MAPPING_GROUP, atau MAPPING_GROUP_LINE.`
   );
 }
 
 function convertParamMap(statement) {
   if (statement.tableName !== "PARAM_MAP") {
-    throw new Error(
-      `Mode PARAM_MAP tidak sesuai dengan tabel ${statement.tableName}.`,
-    );
+    throw new Error(`Mode PARAM_MAP tidak sesuai dengan tabel ${statement.tableName}.`);
   }
 
   const row = createRow(statement);
@@ -383,15 +344,13 @@ function convertParamMap(statement) {
   return formatCall(
     "MERGE_PARAM_MAP",
     columns.map((column) => quoteProcedureValue(row[column])),
-    true,
+    true
   );
 }
 
 function convertGeneric(statement, selectedTable) {
   if (statement.tableName !== selectedTable) {
-    throw new Error(
-      `Dropdown memilih ${selectedTable}, tetapi input berisi tabel ${statement.tableName}.`,
-    );
+    throw new Error(`Dropdown memilih ${selectedTable}, tetapi input berisi tabel ${statement.tableName}.`);
   }
 
   const parameters = statement.columns
@@ -400,9 +359,7 @@ function convertGeneric(statement, selectedTable) {
     .map(({ value }) => quoteProcedureValue(value));
 
   if (!parameters.length) {
-    throw new Error(
-      `${selectedTable}: tidak ada parameter yang dapat dikonversi.`,
-    );
+    throw new Error(`${selectedTable}: tidak ada parameter yang dapat dikonversi.`);
   }
 
   return formatCall(`MERGE_${selectedTable}`, parameters, true);
@@ -412,8 +369,7 @@ function convertSql(sql, selectedTable) {
   const statements = parseInsertStatements(sql);
 
   const output = statements.map((statement) => {
-    if (selectedTable === "MAPPING_COMBINE")
-      return convertMappingCombine(statement);
+    if (selectedTable === "MAPPING_COMBINE") return convertMappingCombine(statement);
     if (selectedTable === "PARAM_MAP") return convertParamMap(statement);
     return convertGeneric(statement, selectedTable);
   });
@@ -421,7 +377,7 @@ function convertSql(sql, selectedTable) {
   return {
     output: output.join("\n"),
     count: output.length,
-    insertCount: countInsertStatements(sql),
+    insertCount: countInsertStatements(sql)
   };
 }
 
@@ -443,9 +399,7 @@ function updateInputStats() {
     }
   }
 
-  const dataLabel = rowCount
-    ? `${rowCount} data terdeteksi`
-    : "siap menerima data";
+  const dataLabel = rowCount ? `${rowCount} data terdeteksi` : "siap menerima data";
   elements.inputStats.textContent = `${value.length.toLocaleString("id-ID")} karakter · ${dataLabel}`;
 }
 
@@ -458,10 +412,7 @@ function showToast(message) {
   window.clearTimeout(toastTimer);
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
-  toastTimer = window.setTimeout(
-    () => elements.toast.classList.remove("show"),
-    2200,
-  );
+  toastTimer = window.setTimeout(() => elements.toast.classList.remove("show"), 2200);
 }
 
 function handleConvert() {
@@ -513,11 +464,8 @@ function clearEditors() {
 function toggleLayout() {
   const isStacked = elements.editorGrid.classList.toggle("stacked");
   elements.layoutButton.setAttribute("aria-pressed", String(isStacked));
-  showToast(
-    isStacked
-      ? "Layout diubah menjadi atas-bawah"
-      : "Layout diubah menjadi kiri-kanan",
-  );
+  elements.layoutModeLabel.textContent = isStacked ? "Posisi atas–bawah" : "Posisi kiri–kanan";
+  showToast(isStacked ? "Layout diubah menjadi atas-bawah" : "Layout diubah menjadi kiri-kanan");
 }
 
 elements.inputSql.addEventListener("input", updateInputStats);
@@ -542,6 +490,6 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     splitSqlAware,
     parseInsertStatements,
-    convertSql,
+    convertSql
   };
 }
