@@ -1,11 +1,12 @@
 <div align="center">
   <img src="app-icon-192.png" width="96" alt="MazWay SQL Merge Converter">
 
-  # SQL Merge Converter
+# SQL Merge Converter
 
-  Website sederhana untuk mengubah data SQL menjadi format Stored Procedure `CALL MWCONFIG.MERGE_*` secara cepat dan konsisten.
+Website sederhana untuk mengubah data SQL menjadi format Stored Procedure `CALL MWCONFIG.MERGE_*` secara cepat dan konsisten.
 
-  **HTML • CSS • JavaScript • Vercel Analytics**
+**HTML • CSS • JavaScript • Vercel Analytics**
+
 </div>
 
 ---
@@ -79,8 +80,8 @@ VALUES
 ### Hasil Konversi
 
 ```sql
-CALL MWCONFIG.MERGE_MAPPING( 'req-core.sms.0200.1.101138',NULL,'[smsm]');
-CALL MWCONFIG.MERGE_MAPPING( 'res-core.sms.0200.1.101138',NULL,'[smsm]');
+CALL MWCONFIG.MERGE_MAPPING('req-core.sms.0200.1.101138',NULL,'[smsm]');
+CALL MWCONFIG.MERGE_MAPPING('res-core.sms.0200.1.101138',NULL,'[smsm]');
 ```
 
 Setiap kelompok nilai akan menghasilkan satu perintah `CALL` tersendiri.
