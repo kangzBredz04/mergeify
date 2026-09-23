@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="SQL Merge Converter untuk membantu proses konversi data MWCONFIG."
+      content="ConfigForge CI/CD Converter untuk mengubah SQL menjadi script deployment yang siap digunakan pada kebutuhan CI/CD."
     />
-    <title>SQL Merge Converter</title>
+    <title>ConfigForge</title>
     <link rel="icon" href="favicon.ico?v=4.1.0" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=4.1.0" />
     <link
@@ -28,7 +28,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=4.1.0" />
+    <link rel="stylesheet" href="style.css?v=4.4.0" />
   </head>
   <body>
     <div class="page-shell">
@@ -37,9 +37,10 @@
           <img class="brand-mark" src="favicon.svg" alt="MazWay Converter" />
           <div>
             <!-- <p class="eyebrow">MAZWAY DEVELOPER TOOL</p> -->
-            <h1>SQL Merge Converter</h1>
+            <h1>ConfigForge</h1>
+            <p class="subtitle">MWCONFIG Deployment Toolkit</p>
             <p class="subtitle">
-              Konversi data SQL dengan cepat, rapi, dan aman.
+              Transform SQL. Prepare Config. Deploy Faster.
             </p>
           </div>
         </div>
@@ -73,6 +74,32 @@
                 <option value="PARAM_MAP">PARAM_MAP</option>
                 <option value="ROUTING_TABLE">ROUTING_TABLE</option>
                 <option value="SERVER_PORT">SERVER_PORT</option>
+              </select>
+              <svg
+                class="select-chevron"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="m7 9 5 5 5-5" />
+              </svg>
+            </span>
+          </label>
+
+          <label class="select-field operation-select" for="operationType">
+            <span class="control-label">Convert ke</span>
+            <span class="select-control">
+              <svg
+                class="control-leading-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M5 7h14M5 12h14M5 17h9" />
+              </svg>
+              <select id="operationType">
+                <option value="INSERT" selected>INSERT</option>
+                <option value="SELECT">SELECT</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
               </select>
               <svg
                 class="select-chevron"
@@ -194,13 +221,13 @@
 
       <footer>
         <p>Copyright &copy; MazWay 2026</p>
-        <span>SQL Merge Converter • Developer Utility</span>
+        <span>MWCONFIG CI/CD Converter • Deployment Utility</span>
       </footer>
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <!-- Vercel Web Analytics: aktif setelah fitur Analytics dinyalakan di dashboard Vercel. -->
     <script defer src="/_vercel/insights/script.js"></script>
-    <script src="script.js?v=4.1.1"></script>
+    <script src="script.js?v=4.4.0"></script>
   </body>
 </html>

@@ -1,9 +1,10 @@
 "use strict";
 
-const APP_VERSION = "4.1.1";
+const APP_VERSION = "4.4.0";
 
 const elements = {
   tableType: document.getElementById("tableType"),
+  operationType: document.getElementById("operationType"),
   editorGrid: document.getElementById("editorGrid"),
   inputSql: document.getElementById("inputSql"),
   outputSql: document.getElementById("outputSql"),
@@ -320,108 +321,583 @@ function formatCall(procedureName, parameters, spacedSeparators = false) {
   return `CALL MWCONFIG.${procedureName}(${parameters.join(separator)});`;
 }
 
-function convertMappingCombine(statement) {
-  const row = createRow(statement);
+const TABLE_RULES = {
+  SERVER_PORT: {
+    columns: ["ADAPTOR_ID", "PORT", "SERVER", "GROUP"],
+    keyColumns: ["ADAPTOR_ID"],
+    procedure: "MERGE_SERVER_PORT",
+  },
+};
 
-  if (statement.tableName === "MAPPING") {
-    requireColumns(row, ["ID", "DESCRIPTION", "MODULE"], "MAPPING");
-    return formatCall("MERGE_MAPPING", [
-      quoteProcedureValue(row.ID),
-      quoteProcedureValue(row.DESCRIPTION, { emptyAsNull: true }),
-      quoteProcedureValue(row.MODULE),
-    ]);
-  }
+const UNAVAILABLE_TABLES = new Set([
+  "ADAPTOR",
+  "ADAPTOR_CODEX",
+  "ADAPTOR_PARAM",
+  "CLIENT",
+]);
 
-  if (statement.tableName === "MAPPING_GROUP") {
-    const columns = [
+const MAPPING_RULES = {
+  MAPPING: {
+    columns: ["ID", "DESCRIPTION", "MODULE"],
+    keyColumns: ["ID"],
+    procedure: "MERGE_MAPPING",
+  },
+  MAPPING_GROUP: {
+    columns: [
       "MAPPING_ID",
       "ID",
       "SOURCE",
       "TARGET",
       "INCLUDE_MAPPING_ID",
       "INCLUDE_ID",
-    ];
-    requireColumns(row, columns, "MAPPING_GROUP");
-    return formatCall(
-      "MERGE_MAPPING_GROUP",
-      columns.map((column) =>
-        quoteProcedureValue(row[column], { alwaysQuote: true }),
-      ),
-    );
+    ],
+    keyColumns: ["MAPPING_ID", "ID"],
+    procedure: "MERGE_MAPPING_GROUP",
+  },
+  MAPPING_GROUP_LINE: {
+    columns: ["MAPPING_ID", "MAPPING_GROUP_ID", "NAME", "TEXT", "SEQ"],
+    keyColumns: ["MAPPING_ID", "MAPPING_GROUP_ID", "NAME"],
+    procedure: "MERGE_MAPPING_GROUP_LINE",
+  },
+};
+
+const ROUTING_TABLE_COLUMNS = [
+  "CODE_START",
+  "CODE_END",
+  "CHANNEL",
+  "QUEUE",
+  "STATUS",
+  "SUBCODEX",
+  "REPLY_TO",
+  "REPLY_TO_QMGR",
+];
+
+const PARAM_MAP_COLUMNS = ["GROUP", "NAME", "VALUE", "DESCRIPTION", "SEQ"];
+const ERROR_MAP_COLUMNS = ["GROUP", "ORIGINAL", "TARGET", "DETAIL"];
+const DTREE_REQUIRED_COLUMNS = ["GROUP", "PATH", "VALUE"];
+const DTREE_OUTPUT_COLUMNS = ["GROUP", "PATH", "VALUE", "MODULE"];
+const DEV_TELLER_MAP_COLUMNS = [
+  "GROUP",
+  "DEVICE_ID",
+  "DEVICE_NAME",
+  "TERMINAL_ID",
+  "TERMINAL_IP",
+  "TELLER_ID",
+  "CTRL_UNIT_ID",
+];
+const CLIENT_TARGET_COLUMNS = ["CLIENT_ID", "ID", "HOST", "SEQ", "WEIGHT"];
+const CHARGES_COLUMNS = [
+  "ID",
+  "C1_NAME",
+  "C1_VALUE",
+  "C1_SCRIPT",
+  "C1_ACCOUNT",
+  "C2_NAME",
+  "C2_VALUE",
+  "C2_SCRIPT",
+  "C2_ACCOUNT",
+  "C3_NAME",
+  "C3_VALUE",
+  "C3_SCRIPT",
+  "C3_ACCOUNT",
+  "C4_NAME",
+  "C4_VALUE",
+  "C4_SCRIPT",
+  "C4_ACCOUNT",
+  "C5_NAME",
+  "C5_VALUE",
+  "C5_SCRIPT",
+  "C5_ACCOUNT",
+];
+
+function getRule(statement, selectedTable) {
+  if (selectedTable === "MAPPING_COMBINE") {
+    const rule = MAPPING_RULES[statement.tableName];
+    if (!rule) {
+      throw new Error(
+        `Mode MAPPING_COMBINE tidak menerima tabel ${statement.tableName}. Gunakan MAPPING, MAPPING_GROUP, atau MAPPING_GROUP_LINE.`,
+      );
+    }
+    return rule;
   }
 
-  if (statement.tableName === "MAPPING_GROUP_LINE") {
-    const columns = ["MAPPING_ID", "MAPPING_GROUP_ID", "NAME", "TEXT", "SEQ"];
-    requireColumns(row, columns, "MAPPING_GROUP_LINE");
-    return formatCall(
-      "MERGE_MAPPING_GROUP_LINE",
-      columns.map((column) =>
-        quoteProcedureValue(row[column], {
-          alwaysQuote: true,
-          quoteNull: true,
-        }),
-      ),
-    );
-  }
-
-  throw new Error(
-    `Mode MAPPING_COMBINE tidak menerima tabel ${statement.tableName}. Gunakan MAPPING, MAPPING_GROUP, atau MAPPING_GROUP_LINE.`,
-  );
-}
-
-function convertParamMap(statement) {
-  if (statement.tableName !== "PARAM_MAP") {
-    throw new Error(
-      `Mode PARAM_MAP tidak sesuai dengan tabel ${statement.tableName}.`,
-    );
-  }
-
-  const row = createRow(statement);
-  const columns = ["GROUP", "NAME", "VALUE", "SEQ", "DESCRIPTION"];
-  requireColumns(row, columns, "PARAM_MAP");
-
-  return formatCall(
-    "MERGE_PARAM_MAP",
-    columns.map((column) => quoteProcedureValue(row[column])),
-    true,
-  );
-}
-
-function convertGeneric(statement, selectedTable) {
   if (statement.tableName !== selectedTable) {
     throw new Error(
       `Dropdown memilih ${selectedTable}, tetapi input berisi tabel ${statement.tableName}.`,
     );
   }
 
-  const parameters = statement.columns
-    .map((column, index) => ({ column, value: statement.values[index] }))
-    .filter(({ column }) => !AUDIT_COLUMNS.has(column))
-    .map(({ value }) => quoteProcedureValue(value));
+  return TABLE_RULES[selectedTable] || null;
+}
 
-  if (!parameters.length) {
+function getGenericColumns(statement) {
+  return statement.columns.filter((column) => !AUDIT_COLUMNS.has(column));
+}
+
+function getConversionColumns(statement, selectedTable, rule) {
+  const row = createRow(statement);
+
+  if (rule) {
+    requireColumns(row, rule.columns, statement.tableName);
+    return rule.columns;
+  }
+
+  const columns = getGenericColumns(statement);
+  if (!columns.length) {
+    throw new Error(`${selectedTable}: tidak ada kolom yang dapat dikonversi.`);
+  }
+  return columns;
+}
+
+function getKeyColumns(columns, rule) {
+  if (rule?.keyColumns?.length) return rule.keyColumns;
+  return [columns[0]];
+}
+
+function formatWhere(row, keyColumns) {
+  return keyColumns
+    .map((column) => `${column} = ${quoteProcedureValue(row[column])}`)
+    .join(" AND ");
+}
+
+function valueOrEmptyString(value) {
+  return isSqlNull(value) ? "''" : quoteProcedureValue(value);
+}
+
+function valueOrBlank(value) {
+  return isSqlNull(value) ? "" : quoteProcedureValue(value);
+}
+
+function rowValueOrDefault(row, column, defaultValue = "''") {
+  return column in row ? quoteProcedureValue(row[column]) : defaultValue;
+}
+
+function normalizeWholeNumber(value) {
+  if (isSqlNull(value)) return "0";
+  const raw = String(value).trim();
+  if (/^[+-]?\d+\.0+$/.test(raw)) return raw.replace(/\.0+$/, "");
+  return raw;
+}
+
+function chargeTextValue(value) {
+  return isSqlNull(value) ? "''" : quoteProcedureValue(value);
+}
+
+function chargeNumericValue(row, index) {
+  const value = row[`C${index}_VALUE`];
+  return index % 2 === 1
+    ? normalizeWholeNumber(value)
+    : quoteProcedureValue(value);
+}
+
+function unavailableTableMessage(tableName) {
+  return `Fitur konversi ${tableName} belum tersedia untuk saat ini.`;
+}
+
+function convertInsert(statement, selectedTable, rule, columns) {
+  const row = createRow(statement);
+
+  // Pertahankan aturan khusus converter MAPPING_COMBINE.
+  if (selectedTable === "MAPPING_COMBINE") {
+    if (statement.tableName === "MAPPING") {
+      return formatCall("MERGE_MAPPING", [
+        quoteProcedureValue(row.ID),
+        quoteProcedureValue(row.DESCRIPTION, { emptyAsNull: true }),
+        quoteProcedureValue(row.MODULE),
+      ]);
+    }
+
+    if (statement.tableName === "MAPPING_GROUP") {
+      return formatCall(
+        "MERGE_MAPPING_GROUP",
+        columns.map((column) =>
+          quoteProcedureValue(row[column], { alwaysQuote: true }),
+        ),
+      );
+    }
+
+    if (statement.tableName === "MAPPING_GROUP_LINE") {
+      return formatCall(
+        "MERGE_MAPPING_GROUP_LINE",
+        columns.map((column) =>
+          quoteProcedureValue(row[column], {
+            alwaysQuote: true,
+            quoteNull: true,
+          }),
+        ),
+      );
+    }
+  }
+
+  const procedureName = rule?.procedure || `MERGE_${selectedTable}`;
+  return formatCall(
+    procedureName,
+    columns.map((column) => quoteProcedureValue(row[column])),
+    selectedTable !== "MAPPING_COMBINE",
+  );
+}
+
+function convertSelect(statement, columns, keyColumns) {
+  const row = createRow(statement);
+  return `SELECT ${columns.join(", ")} FROM MWCONFIG.${statement.tableName} WHERE ${formatWhere(row, keyColumns)};`;
+}
+
+function convertUpdate(statement, columns, keyColumns) {
+  const row = createRow(statement);
+  const keySet = new Set(keyColumns);
+  const setColumns = columns.filter((column) => !keySet.has(column));
+
+  if (!setColumns.length) {
     throw new Error(
-      `${selectedTable}: tidak ada parameter yang dapat dikonversi.`,
+      `${statement.tableName}: tidak ada kolom yang dapat di-update.`,
     );
   }
 
-  return formatCall(`MERGE_${selectedTable}`, parameters, true);
+  const setClause = setColumns
+    .map((column) => `${column} = ${quoteProcedureValue(row[column])}`)
+    .join(", ");
+
+  return `UPDATE MWCONFIG.${statement.tableName} SET ${setClause} WHERE ${formatWhere(row, keyColumns)};`;
 }
 
-function convertSql(sql, selectedTable) {
-  const statements = parseInsertStatements(sql);
+function convertDelete(statement, keyColumns) {
+  const row = createRow(statement);
+  return `DELETE MWCONFIG.${statement.tableName} WHERE ${formatWhere(row, keyColumns)};`;
+}
 
-  const output = statements.map((statement) => {
-    if (selectedTable === "MAPPING_COMBINE")
-      return convertMappingCombine(statement);
-    if (selectedTable === "PARAM_MAP") return convertParamMap(statement);
-    return convertGeneric(statement, selectedTable);
-  });
+function ensureSelectedTable(statement, expectedTable) {
+  if (statement.tableName !== expectedTable) {
+    throw new Error(
+      `Dropdown memilih ${expectedTable}, tetapi input berisi tabel ${statement.tableName}.`,
+    );
+  }
+}
+
+function convertRoutingTable(statement, operation) {
+  ensureSelectedTable(statement, "ROUTING_TABLE");
+  const row = createRow(statement);
+  requireColumns(row, ROUTING_TABLE_COLUMNS, "ROUTING_TABLE");
+
+  const where = ["CHANNEL", "CODE_START", "CODE_END"]
+    .map((column) => `${column} = ${quoteProcedureValue(row[column])}`)
+    .join(" AND ");
+
+  if (operation === "SELECT") {
+    return `SELECT ${ROUTING_TABLE_COLUMNS.join(", ")} FROM MWCONFIG.ROUTING_TABLE WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.ROUTING_TABLE SET QUEUE = ${quoteProcedureValue(row.QUEUE)}, STATUS = ${quoteProcedureValue(row.STATUS)}, SUBCODEX = ${valueOrEmptyString(row.SUBCODEX)}, REPLY_TO = ${quoteProcedureValue(row.REPLY_TO)}, REPLY_TO_QMGR = ${quoteProcedureValue(row.REPLY_TO_QMGR)}, MODIFIED_BY = CURRENT USER, MODIFIED_DATE = CURRENT TIMESTAMP WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.ROUTING_TABLE WHERE ${where};`;
+  }
+
+  return formatCall(
+    "MERGE_ROUTING_TABLE",
+    [
+      quoteProcedureValue(row.CODE_START),
+      quoteProcedureValue(row.CODE_END),
+      quoteProcedureValue(row.CHANNEL),
+      "CURRENT TIMESTAMP",
+      "NULL",
+      quoteProcedureValue(row.QUEUE),
+      quoteProcedureValue(row.STATUS),
+      quoteProcedureValue(row.SUBCODEX),
+      "''",
+      quoteProcedureValue(row.REPLY_TO),
+      quoteProcedureValue(row.REPLY_TO_QMGR),
+      "CURRENT USER",
+      "CURRENT TIMESTAMP",
+    ],
+    true,
+  );
+}
+
+function convertParamMapSpecial(statement, operation) {
+  ensureSelectedTable(statement, "PARAM_MAP");
+  const row = createRow(statement);
+  requireColumns(row, PARAM_MAP_COLUMNS, "PARAM_MAP");
+  const where = `GROUP = ${quoteProcedureValue(row.GROUP)} AND NAME = ${quoteProcedureValue(row.NAME)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${PARAM_MAP_COLUMNS.join(", ")} FROM MWCONFIG.PARAM_MAP WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.PARAM_MAP SET VALUE = ${quoteProcedureValue(row.VALUE)}, DESCRIPTION = ${valueOrEmptyString(row.DESCRIPTION)}, SEQ = ${valueOrBlank(row.SEQ)} WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.PARAM_MAP WHERE ${where};`;
+  }
+
+  // Urutan parameter procedure: GROUP, NAME, VALUE, SEQ, DESCRIPTION.
+  return formatCall(
+    "MERGE_PARAM_MAP",
+    [
+      quoteProcedureValue(row.GROUP),
+      quoteProcedureValue(row.NAME),
+      quoteProcedureValue(row.VALUE),
+      valueOrBlank(row.SEQ),
+      valueOrEmptyString(row.DESCRIPTION),
+    ],
+    true,
+  );
+}
+
+function convertErrorMap(statement, operation) {
+  ensureSelectedTable(statement, "ERROR_MAP");
+  const row = createRow(statement);
+  requireColumns(row, ERROR_MAP_COLUMNS, "ERROR_MAP");
+  const where = `GROUP = ${quoteProcedureValue(row.GROUP)} AND ORIGINAL = ${quoteProcedureValue(row.ORIGINAL)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${ERROR_MAP_COLUMNS.join(", ")} FROM MWCONFIG.ERROR_MAP WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.ERROR_MAP SET TARGET = ${quoteProcedureValue(row.TARGET)}, DETAIL = ${valueOrEmptyString(row.DETAIL)}, MODIFIED_BY = CURRENT USER, TIMESTAMP = CURRENT TIMESTAMP WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.ERROR_MAP WHERE ${where};`;
+  }
+
+  return formatCall(
+    "MERGE_ERROR_MAP",
+    [
+      quoteProcedureValue(row.GROUP),
+      quoteProcedureValue(row.ORIGINAL),
+      quoteProcedureValue(row.TARGET),
+      valueOrEmptyString(row.DETAIL),
+    ],
+    true,
+  );
+}
+
+function convertDtree(statement, operation) {
+  ensureSelectedTable(statement, "DTREE");
+  const row = createRow(statement);
+  requireColumns(row, DTREE_REQUIRED_COLUMNS, "DTREE");
+  const moduleValue = rowValueOrDefault(row, "MODULE", "''");
+  const where = `GROUP = ${quoteProcedureValue(row.GROUP)} AND PATH = ${quoteProcedureValue(row.PATH)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${DTREE_OUTPUT_COLUMNS.join(", ")} FROM MWCONFIG.DTREE WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.DTREE SET VALUE = ${quoteProcedureValue(row.VALUE)}, MODULE = ${moduleValue}, MODIFIED_BY = CURRENT USER, TIMESTAMP = CURRENT TIMESTAMP WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.DTREE WHERE ${where};`;
+  }
+
+  return formatCall(
+    "MERGE_DTREE",
+    [
+      quoteProcedureValue(row.GROUP),
+      quoteProcedureValue(row.PATH),
+      quoteProcedureValue(row.VALUE),
+      moduleValue,
+    ],
+    true,
+  );
+}
+
+function convertDevTellerMap(statement, operation) {
+  ensureSelectedTable(statement, "DEV_TELLER_MAP");
+  const row = createRow(statement);
+  requireColumns(row, DEV_TELLER_MAP_COLUMNS, "DEV_TELLER_MAP");
+  const where = `GROUP = ${quoteProcedureValue(row.GROUP)} AND DEVICE_ID = ${quoteProcedureValue(row.DEVICE_ID)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${DEV_TELLER_MAP_COLUMNS.join(", ")} FROM MWCONFIG.DEV_TELLER_MAP WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.DEV_TELLER_MAP SET DEVICE_NAME = ${quoteProcedureValue(row.DEVICE_NAME)}, TERMINAL_ID = ${quoteProcedureValue(row.TERMINAL_ID)}, TERMINAL_IP = ${quoteProcedureValue(row.TERMINAL_IP)}, TELLER_ID = ${quoteProcedureValue(row.TELLER_ID)}, CTRL_UNIT_ID = ${quoteProcedureValue(row.CTRL_UNIT_ID)}, MODIFIED_BY = CURRENT USER, TIMESTAMP = CURRENT TIMESTAMP WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.DEV_TELLER_MAP WHERE ${where};`;
+  }
+
+  return formatCall(
+    "MERGE_DEV_TELLER_MAP",
+    DEV_TELLER_MAP_COLUMNS.map((column) => quoteProcedureValue(row[column])),
+    true,
+  );
+}
+
+function convertClientTarget(statement, operation) {
+  ensureSelectedTable(statement, "CLIENT_TARGET");
+  const row = createRow(statement);
+  requireColumns(row, CLIENT_TARGET_COLUMNS, "CLIENT_TARGET");
+  const where = `CLIENT_ID = ${quoteProcedureValue(row.CLIENT_ID)} AND ID = ${quoteProcedureValue(row.ID)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${CLIENT_TARGET_COLUMNS.join(", ")} FROM MWCONFIG.CLIENT_TARGET WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    return `UPDATE MWCONFIG.CLIENT_TARGET SET HOST = ${quoteProcedureValue(row.HOST)}, SEQ = ${quoteProcedureValue(row.SEQ)}, WEIGHT = ${valueOrBlank(row.WEIGHT)} WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.CLIENT_TARGET WHERE ${where};`;
+  }
+
+  return formatCall(
+    "CLIENT_TARGET",
+    [
+      quoteProcedureValue(row.CLIENT_ID),
+      quoteProcedureValue(row.ID),
+      quoteProcedureValue(row.HOST),
+      quoteProcedureValue(row.SEQ),
+      valueOrBlank(row.WEIGHT),
+    ],
+    true,
+  );
+}
+
+function convertCharges(statement, operation) {
+  ensureSelectedTable(statement, "CHARGES");
+  const row = createRow(statement);
+  requireColumns(row, CHARGES_COLUMNS, "CHARGES");
+  const where = `ID = ${quoteProcedureValue(row.ID)}`;
+
+  if (operation === "SELECT") {
+    return `SELECT ${CHARGES_COLUMNS.join(", ")} FROM MWCONFIG.CHARGES WHERE ${where};`;
+  }
+
+  if (operation === "UPDATE") {
+    const assignments = [];
+    for (let index = 1; index <= 5; index += 1) {
+      assignments.push(
+        `C${index}_NAME = ${chargeTextValue(row[`C${index}_NAME`])}`,
+        `C${index}_VALUE = ${chargeNumericValue(row, index)}`,
+        `C${index}_SCRIPT = ${chargeTextValue(row[`C${index}_SCRIPT`])}`,
+        `C${index}_ACCOUNT = ${chargeTextValue(row[`C${index}_ACCOUNT`])}`,
+      );
+    }
+    assignments.push(
+      "MODIFIED_BY = CURRENT USER",
+      "TIMESTAMP = CURRENT TIMESTAMP",
+    );
+    return `UPDATE MWCONFIG.CHARGES SET ${assignments.join(", ")} WHERE ${where};`;
+  }
+
+  if (operation === "DELETE") {
+    return `DELETE MWCONFIG.CHARGES WHERE ${where};`;
+  }
+
+  const parameters = [quoteProcedureValue(row.ID)];
+  for (let index = 1; index <= 5; index += 1) {
+    parameters.push(
+      chargeNumericValue(row, index),
+      chargeTextValue(row[`C${index}_NAME`]),
+      chargeTextValue(row[`C${index}_SCRIPT`]),
+      chargeTextValue(row[`C${index}_ACCOUNT`]),
+    );
+  }
+
+  return formatCall("MERGE_CHARGES", parameters, true);
+}
+
+function convertMappingCombine(statement, operation) {
+  const rule = getRule(statement, "MAPPING_COMBINE");
+  const row = createRow(statement);
+  requireColumns(row, rule.columns, statement.tableName);
+
+  if (operation === "INSERT") {
+    return convertInsert(statement, "MAPPING_COMBINE", rule, rule.columns);
+  }
+
+  if (operation === "SELECT") {
+    return convertSelect(statement, rule.columns, rule.keyColumns);
+  }
+
+  if (operation === "DELETE") {
+    return convertDelete(statement, rule.keyColumns);
+  }
+
+  return convertUpdate(statement, rule.columns, rule.keyColumns);
+}
+
+function convertStatement(statement, selectedTable, operation) {
+  if (UNAVAILABLE_TABLES.has(selectedTable)) {
+    throw new Error(unavailableTableMessage(selectedTable));
+  }
+  if (selectedTable === "ROUTING_TABLE") {
+    return convertRoutingTable(statement, operation);
+  }
+  if (selectedTable === "PARAM_MAP") {
+    return convertParamMapSpecial(statement, operation);
+  }
+  if (selectedTable === "MAPPING_COMBINE") {
+    return convertMappingCombine(statement, operation);
+  }
+  if (selectedTable === "ERROR_MAP") {
+    return convertErrorMap(statement, operation);
+  }
+  if (selectedTable === "DTREE") {
+    return convertDtree(statement, operation);
+  }
+  if (selectedTable === "DEV_TELLER_MAP") {
+    return convertDevTellerMap(statement, operation);
+  }
+  if (selectedTable === "CLIENT_TARGET") {
+    return convertClientTarget(statement, operation);
+  }
+  if (selectedTable === "CHARGES") {
+    return convertCharges(statement, operation);
+  }
+
+  const rule = getRule(statement, selectedTable);
+  const columns = getConversionColumns(statement, selectedTable, rule);
+  const keyColumns = getKeyColumns(columns, rule);
+  const row = createRow(statement);
+  requireColumns(row, keyColumns, statement.tableName);
+
+  switch (operation) {
+    case "SELECT":
+      return convertSelect(statement, columns, keyColumns);
+    case "UPDATE":
+      return convertUpdate(statement, columns, keyColumns);
+    case "DELETE":
+      return convertDelete(statement, keyColumns);
+    case "INSERT":
+    default:
+      return convertInsert(statement, selectedTable, rule, columns);
+  }
+}
+
+function convertSql(sql, selectedTable, operation = "INSERT") {
+  if (UNAVAILABLE_TABLES.has(selectedTable)) {
+    throw new Error(unavailableTableMessage(selectedTable));
+  }
+
+  const statements = parseInsertStatements(sql);
+  const normalizedOperation = String(operation || "INSERT").toUpperCase();
+  const allowedOperations = new Set(["INSERT", "SELECT", "UPDATE", "DELETE"]);
+
+  if (!allowedOperations.has(normalizedOperation)) {
+    throw new Error(`Jenis konversi ${normalizedOperation} tidak didukung.`);
+  }
+
+  const output = statements.map((statement) =>
+    convertStatement(statement, selectedTable, normalizedOperation),
+  );
 
   return {
     output: output.join("\n"),
     count: output.length,
     insertCount: countInsertStatements(sql),
+    operation: normalizedOperation,
   };
 }
 
@@ -433,8 +909,6 @@ function updateInputStats() {
   const value = elements.inputSql.value;
   let rowCount = 0;
 
-  // Saat SQL sudah lengkap, hitung jumlah tuple VALUES secara aktual.
-  // Jika pengguna masih mengetik SQL yang belum lengkap, UI tetap berjalan normal.
   if (value.trim()) {
     try {
       rowCount = parseInsertStatements(value).length;
@@ -464,27 +938,53 @@ function showToast(message) {
   );
 }
 
-function handleConvert() {
+let hasConvertedOnce = false;
+
+function handleConvert(options = {}) {
+  const { showSuccessToast = true, focusWhenEmpty = true } = options;
   const sql = elements.inputSql.value.trim();
+
   if (!sql) {
-    elements.inputSql.focus();
+    if (focusWhenEmpty) elements.inputSql.focus();
     showFeedback("Masukkan data yang ingin dikonversi terlebih dahulu.");
-    return;
+    return false;
   }
 
+  hasConvertedOnce = true;
+
   try {
-    const result = convertSql(sql, elements.tableType.value);
+    const result = convertSql(
+      sql,
+      elements.tableType.value,
+      elements.operationType.value,
+    );
     elements.outputSql.value = result.output;
-    elements.outputStats.textContent = `${result.count} hasil berhasil dibuat`;
+    elements.outputStats.textContent = `${result.count} hasil ${result.operation} berhasil dibuat`;
     elements.copyButton.disabled = false;
-    showFeedback(`${result.count} data berhasil dikonversi.`, "success");
-    showToast("Data berhasil dikonversi");
+    showFeedback(
+      `${result.count} data berhasil dikonversi ke ${result.operation}.`,
+      "success",
+    );
+    if (showSuccessToast) {
+      showToast(`Data berhasil dikonversi ke ${result.operation}`);
+    }
+    return true;
   } catch (error) {
     elements.outputSql.value = "";
     elements.outputStats.textContent = "Konversi gagal";
     elements.copyButton.disabled = true;
     showFeedback(error.message || "Terjadi kesalahan saat membaca SQL.");
+    return false;
   }
+}
+
+function regenerateIfAlreadyConverted() {
+  if (!hasConvertedOnce || !elements.inputSql.value.trim()) {
+    showFeedback();
+    return;
+  }
+
+  handleConvert({ showSuccessToast: false, focusWhenEmpty: false });
 }
 
 async function copyOutput() {
@@ -505,6 +1005,7 @@ function clearEditors() {
   elements.outputSql.value = "";
   elements.outputStats.textContent = "Belum ada hasil";
   elements.copyButton.disabled = true;
+  hasConvertedOnce = false;
   showFeedback();
   updateInputStats();
   elements.inputSql.focus();
@@ -524,11 +1025,24 @@ function toggleLayout() {
 }
 
 elements.inputSql.addEventListener("input", updateInputStats);
-elements.convertButton.addEventListener("click", handleConvert);
+elements.convertButton.addEventListener("click", () => handleConvert());
 elements.copyButton.addEventListener("click", copyOutput);
 elements.clearButton.addEventListener("click", clearEditors);
 elements.layoutButton.addEventListener("click", toggleLayout);
-elements.tableType.addEventListener("change", () => showFeedback());
+elements.tableType.addEventListener("change", () => {
+  const selectedTable = elements.tableType.value;
+
+  if (UNAVAILABLE_TABLES.has(selectedTable)) {
+    elements.outputSql.value = "";
+    elements.outputStats.textContent = "Fitur belum tersedia";
+    elements.copyButton.disabled = true;
+    showFeedback(unavailableTableMessage(selectedTable));
+    return;
+  }
+
+  regenerateIfAlreadyConverted();
+});
+elements.operationType.addEventListener("change", regenerateIfAlreadyConverted);
 
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -540,7 +1054,6 @@ document.addEventListener("keydown", (event) => {
 document.documentElement.dataset.appVersion = APP_VERSION;
 updateInputStats();
 
-// Membuat fungsi inti dapat diuji di Node.js tanpa mengubah perilaku browser.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     splitSqlAware,
