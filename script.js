@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "4.6.0";
+const APP_VERSION = "4.7.2";
 
 const elements = {
   tableType: document.getElementById("tableType"),
@@ -16,6 +16,10 @@ const elements = {
   layoutModeLabel: document.getElementById("layoutModeLabel"),
   clearButton: document.getElementById("clearButton"),
   copyButton: document.getElementById("copyButton"),
+  downloadButton: document.getElementById("downloadButton"),
+  historyList: document.getElementById("historyList"),
+  historyCount: document.getElementById("historyCount"),
+  clearHistoryButton: document.getElementById("clearHistoryButton"),
   toast: document.getElementById("toast"),
   samplePanel: document.getElementById("samplePanel"),
   sampleSql: document.getElementById("sampleSql"),
@@ -39,6 +43,8 @@ const AUDIT_COLUMNS = new Set([
 let toastTimer;
 
 const THEME_STORAGE_KEY = "mw-forge-theme";
+const HISTORY_STORAGE_KEY = "mw-forge-history-v1";
+const HISTORY_LIMIT = 10;
 
 function getInitialTheme() {
   const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -1214,10 +1220,203 @@ function showToast(message) {
   );
 }
 
+function getHistory() {
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(HISTORY_STORAGE_KEY) || "[]",
+    );
+    return Array.isArray(parsed) ? parsed.slice(0, HISTORY_LIMIT) : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function saveHistory(history) {
+  try {
+    window.localStorage.setItem(
+      HISTORY_STORAGE_KEY,
+      JSON.stringify(history.slice(0, HISTORY_LIMIT)),
+    );
+    return true;
+  } catch (_error) {
+    showFeedback(
+      "History lokal tidak dapat disimpan. Penyimpanan browser mungkin penuh.",
+    );
+    return false;
+  }
+}
+
+function formatHistoryTime(timestamp) {
+  try {
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(timestamp));
+  } catch (_error) {
+    return "Baru saja";
+  }
+}
+
+function addHistoryEntry(result) {
+  const history = getHistory();
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: new Date().toISOString(),
+    table: elements.tableType.value,
+    operation: result.operation,
+    input: elements.inputSql.value,
+    output: result.output,
+    count: result.count,
+  };
+
+  const duplicateIndex = history.findIndex(
+    (item) =>
+      item.table === entry.table &&
+      item.operation === entry.operation &&
+      item.input === entry.input &&
+      item.output === entry.output,
+  );
+  if (duplicateIndex >= 0) history.splice(duplicateIndex, 1);
+  history.unshift(entry);
+
+  if (saveHistory(history)) renderHistory();
+}
+
+function renderHistory() {
+  const history = getHistory();
+  elements.historyList.textContent = "";
+  elements.historyCount.textContent = `${history.length} / ${HISTORY_LIMIT}`;
+  elements.clearHistoryButton.disabled = history.length === 0;
+
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.textContent = "Belum ada history konversi.";
+    elements.historyList.appendChild(empty);
+    return;
+  }
+
+  history.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "history-item";
+
+    const main = document.createElement("div");
+    main.className = "history-item-main";
+
+    const title = document.createElement("strong");
+    title.textContent = `${item.table} • ${item.operation}`;
+
+    const meta = document.createElement("span");
+    meta.textContent = `${item.count || 0} data • ${formatHistoryTime(item.createdAt)}`;
+
+    main.append(title, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "history-item-actions";
+
+    const loadButton = document.createElement("button");
+    loadButton.type = "button";
+    loadButton.className = "history-action-button";
+    loadButton.dataset.historyAction = "load";
+    loadButton.dataset.historyId = item.id;
+    loadButton.textContent = "Muat";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "history-action-button danger";
+    deleteButton.dataset.historyAction = "delete";
+    deleteButton.dataset.historyId = item.id;
+    deleteButton.textContent = "Hapus";
+
+    actions.append(loadButton, deleteButton);
+    card.append(main, actions);
+    elements.historyList.appendChild(card);
+  });
+}
+
+function loadHistoryEntry(id) {
+  const item = getHistory().find((entry) => entry.id === id);
+  if (!item) return;
+
+  elements.tableType.value = item.table;
+  elements.operationType.value = item.operation;
+  elements.inputSql.value = item.input;
+  elements.outputSql.value = item.output;
+  elements.outputStats.textContent = `${item.count || item.output.split("\n").filter(Boolean).length} hasil ${item.operation} dimuat dari history`;
+  elements.copyButton.disabled = !item.output;
+  elements.downloadButton.disabled = !item.output;
+  hasConvertedOnce = Boolean(item.output);
+  updateSamplePanel();
+  updateInputStats();
+  showFeedback("History berhasil dimuat.", "success");
+  showToast("History berhasil dimuat");
+}
+
+function deleteHistoryEntry(id) {
+  const history = getHistory().filter((item) => item.id !== id);
+  saveHistory(history);
+  renderHistory();
+  showToast("History dihapus");
+}
+
+function clearHistory() {
+  if (!getHistory().length) return;
+  window.localStorage.removeItem(HISTORY_STORAGE_KEY);
+  renderHistory();
+  showToast("Semua history dihapus");
+}
+
+function handleHistoryClick(event) {
+  const button = event.target.closest("[data-history-action]");
+  if (!button) return;
+  const { historyAction, historyId } = button.dataset;
+  if (historyAction === "load") loadHistoryEntry(historyId);
+  if (historyAction === "delete") deleteHistoryEntry(historyId);
+}
+
+function buildSqlFilename() {
+  const table = elements.tableType.value
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-");
+  const operation = elements.operationType.value.toLowerCase();
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    "-",
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+  ].join("");
+  return `mw-forge_${table}_${operation}_${stamp}.sql`;
+}
+
+function downloadOutput() {
+  const output = elements.outputSql.value.trim();
+  if (!output) return;
+
+  const blob = new Blob([`${output}\n`], { type: "text/sql;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = buildSqlFilename();
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("File .sql berhasil dibuat");
+}
+
 let hasConvertedOnce = false;
 
 function handleConvert(options = {}) {
-  const { showSuccessToast = true, focusWhenEmpty = true } = options;
+  const {
+    showSuccessToast = true,
+    focusWhenEmpty = true,
+    saveToHistory = true,
+  } = options;
   const sql = elements.inputSql.value.trim();
 
   if (!sql) {
@@ -1237,10 +1436,12 @@ function handleConvert(options = {}) {
     elements.outputSql.value = result.output;
     elements.outputStats.textContent = `${result.count} hasil ${result.operation} berhasil dibuat`;
     elements.copyButton.disabled = false;
+    elements.downloadButton.disabled = false;
     showFeedback(
       `${result.count} data berhasil dikonversi ke ${result.operation}.`,
       "success",
     );
+    if (saveToHistory) addHistoryEntry(result);
     if (showSuccessToast) {
       showToast(`Data berhasil dikonversi ke ${result.operation}`);
     }
@@ -1249,6 +1450,7 @@ function handleConvert(options = {}) {
     elements.outputSql.value = "";
     elements.outputStats.textContent = "Konversi gagal";
     elements.copyButton.disabled = true;
+    elements.downloadButton.disabled = true;
     showFeedback(error.message || "Terjadi kesalahan saat membaca SQL.");
     return false;
   }
@@ -1260,7 +1462,11 @@ function regenerateIfAlreadyConverted() {
     return;
   }
 
-  handleConvert({ showSuccessToast: false, focusWhenEmpty: false });
+  handleConvert({
+    showSuccessToast: false,
+    focusWhenEmpty: false,
+    saveToHistory: false,
+  });
 }
 
 async function copyOutput() {
@@ -1300,6 +1506,7 @@ function clearEditors() {
   elements.outputSql.value = "";
   elements.outputStats.textContent = "Belum ada hasil";
   elements.copyButton.disabled = true;
+  elements.downloadButton.disabled = true;
   hasConvertedOnce = false;
   showFeedback();
   updateInputStats();
@@ -1322,8 +1529,11 @@ function toggleLayout() {
 elements.inputSql.addEventListener("input", updateInputStats);
 elements.convertButton.addEventListener("click", () => handleConvert());
 elements.copyButton.addEventListener("click", copyOutput);
+elements.downloadButton.addEventListener("click", downloadOutput);
 elements.copySampleButton.addEventListener("click", copySampleSql);
 elements.clearButton.addEventListener("click", clearEditors);
+elements.historyList.addEventListener("click", handleHistoryClick);
+elements.clearHistoryButton.addEventListener("click", clearHistory);
 elements.layoutButton.addEventListener("click", toggleLayout);
 elements.themeButton?.addEventListener("click", toggleTheme);
 elements.tableType.addEventListener("change", () => {
@@ -1335,6 +1545,7 @@ elements.tableType.addEventListener("change", () => {
     elements.outputSql.value = "";
     elements.outputStats.textContent = "Fitur belum tersedia";
     elements.copyButton.disabled = true;
+    elements.downloadButton.disabled = true;
     showFeedback(unavailableTableMessage(selectedTable));
     return;
   }
@@ -1354,6 +1565,7 @@ document.documentElement.dataset.appVersion = APP_VERSION;
 applyTheme(getInitialTheme());
 updateInputStats();
 updateSamplePanel();
+renderHistory();
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {

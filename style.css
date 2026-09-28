@@ -238,6 +238,12 @@ select {
   letter-spacing: 0.01em;
 }
 
+/* Samakan warna popup option dengan tema agar native dropdown tetap terbaca. */
+select option {
+  color: #193852;
+  background: #ffffff;
+}
+
 select:focus-visible,
 button:focus-visible,
 textarea:focus-visible {
@@ -880,7 +886,19 @@ html[data-theme="dark"] .select-control {
 }
 
 html[data-theme="dark"] select {
-  color: #dceaf4;
+  color: #e5f1f8;
+  background-color: #14232e;
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] select option {
+  color: #e5f1f8;
+  background: #14232e;
+}
+
+html[data-theme="dark"] select option:checked {
+  color: #ffffff;
+  background: #24577a;
 }
 
 html[data-theme="dark"] .button-secondary {
@@ -1004,5 +1022,197 @@ html[data-theme="dark"] .toast {
 @media (max-width: 560px) {
   .theme-toggle {
     width: 100%;
+  }
+}
+
+/* v4.7.x — SQL download & local history */
+.result-actions,
+.convert-actions,
+.history-header-actions,
+.history-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.convert-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 4px 0 18px;
+}
+
+.utility-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 8px 24px rgba(22, 65, 99, 0.055);
+}
+
+.utility-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.utility-card-header h2 {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.utility-eyebrow {
+  color: #8ca0af;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.history-count {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f7fafc;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.compact-button {
+  padding: 5px 7px;
+  font-size: 10px;
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+  max-height: 222px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.history-empty {
+  display: grid;
+  place-items: center;
+  min-height: 74px;
+  color: #93a4b1;
+  border: 1px dashed #dbe5ec;
+  border-radius: 13px;
+  background: #fafcfd;
+  font-size: 10px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(250, 252, 253, 0.92);
+}
+
+.history-item-main {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.history-item-main strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-main span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.history-action-button {
+  padding: 6px 8px;
+  color: var(--btn-blue);
+  border: 1px solid #d7e4ec;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.history-action-button:hover {
+  background: var(--btn-sky);
+}
+
+.history-action-button.danger {
+  color: var(--danger);
+}
+
+html[data-theme="dark"] .utility-card,
+html[data-theme="dark"] .history-item,
+html[data-theme="dark"] .history-empty,
+html[data-theme="dark"] .history-action-button,
+html[data-theme="dark"] .history-count {
+  border-color: #29404f;
+  background: #111f29;
+}
+
+html[data-theme="dark"] .history-action-button {
+  color: #9fd3ff;
+}
+
+html[data-theme="dark"] .history-action-button:hover {
+  background: #192d3a;
+}
+
+html[data-theme="dark"] .history-empty {
+  color: #718797;
+  border-style: dashed;
+}
+
+@media (max-width: 900px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .result-actions {
+    gap: 3px;
+  }
+
+  .result-actions .text-button {
+    padding-inline: 6px;
+    font-size: 10px;
+  }
+
+  .convert-actions,
+  .button-primary {
+    width: 100%;
+  }
+
+  .history-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .history-item-actions {
+    width: 100%;
+  }
+
+  .history-action-button {
+    flex: 1;
   }
 }

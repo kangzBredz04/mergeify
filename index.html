@@ -28,7 +28,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=4.6.0" />
+    <link rel="stylesheet" href="style.css?v=4.7.2" />
   </head>
   <body>
     <div class="page-shell">
@@ -222,17 +222,30 @@
                   <p>Hasil akan dibuat secara otomatis</p>
                 </div>
               </div>
-              <button
-                id="copyButton"
-                class="text-button"
-                type="button"
-                disabled
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 8h11v11H8zM5 16H4V5h11v1" />
-                </svg>
-                <span>Salin</span>
-              </button>
+              <div class="result-actions">
+                <button
+                  id="downloadButton"
+                  class="text-button"
+                  type="button"
+                  disabled
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" />
+                  </svg>
+                  <span>Unduh .sql</span>
+                </button>
+                <button
+                  id="copyButton"
+                  class="text-button"
+                  type="button"
+                  disabled
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 8h11v11H8zM5 16H4V5h11v1" />
+                  </svg>
+                  <span>Salin</span>
+                </button>
+              </div>
             </div>
             <textarea
               id="outputSql"
@@ -255,18 +268,45 @@
         ></div>
 
         <div class="convert-area">
-          <button
-            id="convertButton"
-            class="button button-primary"
-            type="button"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 7h11l-3-3M17 17H6l3 3M18 7l-3 3M6 17l3-3" />
-            </svg>
-            <span>Convert Data</span>
-          </button>
+          <div class="convert-actions">
+            <button
+              id="convertButton"
+              class="button button-primary"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 7h11l-3-3M17 17H6l3 3M18 7l-3 3M6 17l3-3" />
+              </svg>
+              <span>Convert Data</span>
+            </button>
+          </div>
           <p>Shortcut: <kbd>Ctrl</kbd> + <kbd>Enter</kbd></p>
         </div>
+
+        <section class="tools-grid" aria-label="History lokal">
+          <article class="utility-card history-card">
+            <div class="utility-card-header">
+              <div>
+                <span class="utility-eyebrow">LOCAL HISTORY</span>
+                <h2>History Konversi</h2>
+              </div>
+              <div class="history-header-actions">
+                <span id="historyCount" class="history-count">0 / 10</span>
+                <button
+                  id="clearHistoryButton"
+                  class="text-button compact-button"
+                  type="button"
+                  disabled
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+            <div id="historyList" class="history-list">
+              <div class="history-empty">Belum ada history konversi.</div>
+            </div>
+          </article>
+        </section>
       </main>
 
       <footer>
@@ -278,6 +318,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <!-- Vercel Web Analytics: aktif setelah fitur Analytics dinyalakan di dashboard Vercel. -->
     <script defer src="/_vercel/insights/script.js"></script>
-    <script src="script.js?v=4.6.0"></script>
+    <script src="script.js?v=4.7.2"></script>
   </body>
 </html>
