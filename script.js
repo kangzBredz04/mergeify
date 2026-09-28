@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "4.5.1";
+const APP_VERSION = "4.5.2";
 
 const elements = {
   tableType: document.getElementById("tableType"),
@@ -19,7 +19,6 @@ const elements = {
   toast: document.getElementById("toast"),
   samplePanel: document.getElementById("samplePanel"),
   sampleSql: document.getElementById("sampleSql"),
-  sampleHint: document.getElementById("sampleHint"),
   copySampleButton: document.getElementById("copySampleButton"),
 };
 
@@ -644,10 +643,6 @@ function updateSamplePanel() {
 
   elements.samplePanel.hidden = false;
   elements.sampleSql.textContent = samples.join("\n");
-  elements.sampleHint.textContent =
-    table === "MAPPING_COMBINE"
-      ? "Ganti keyword di dalam LIKE. Untuk MAPPING_COMBINE cukup gunakan 1 sample MAPPING, 1 MAPPING_GROUP, dan 1 MAPPING_GROUP_LINE sesuai data yang dicari."
-      : "Ganti keyword di dalam LIKE sesuai data yang ingin dicari, jalankan query, lalu copy header + rows hasilnya ke Data Input.";
 }
 
 function getRule(statement, selectedTable) {

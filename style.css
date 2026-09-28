@@ -1,18 +1,18 @@
 :root {
   --btn-navy: #003b70;
   --btn-blue: #005ca9;
-  --btn-sky: #eaf5ff;
+  --btn-sky: #f0f7fc;
   --btn-orange: #f5a623;
   --btn-yellow: #ffc928;
-  --ink: #10283e;
-  --muted: #62778a;
-  --line: #d8e4ed;
-  --surface: rgba(255, 255, 255, 0.94);
-  --background: #eef4f8;
+  --ink: #18364d;
+  --muted: #6f8293;
+  --line: #e3ebf1;
+  --surface: rgba(255, 255, 255, 0.97);
+  --background: #f4f7f9;
   --danger: #c83d4d;
   --success: #147d64;
-  --shadow: 0 24px 70px rgba(0, 48, 88, 0.13);
-  --radius-lg: 24px;
+  --shadow: 0 18px 48px rgba(31, 73, 105, 0.1);
+  --radius-lg: 22px;
   --radius-md: 13px;
 }
 
@@ -30,9 +30,17 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    radial-gradient(circle at 6% 2%, rgba(0, 103, 185, 0.15), transparent 28rem),
-    radial-gradient(circle at 96% 10%, rgba(255, 201, 40, 0.18), transparent 26rem),
-    linear-gradient(180deg, #f8fbfd 0%, var(--background) 100%),
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(81, 157, 204, 0.1),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 96% 8%,
+      rgba(255, 201, 40, 0.09),
+      transparent 24rem
+    ),
+    linear-gradient(180deg, #fbfcfd 0%, var(--background) 100%),
     var(--background);
   font-family: "Inter", Arial, sans-serif;
 }
@@ -60,12 +68,12 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-  padding: 23px 27px;
+  padding: 22px 26px;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(118deg, rgba(0, 49, 91, 0.99), rgba(0, 101, 181, 0.95)),
+    linear-gradient(118deg, rgba(15, 73, 112, 0.98), rgba(39, 113, 160, 0.94)),
     var(--btn-navy);
   box-shadow: var(--shadow);
   position: relative;
@@ -102,7 +110,7 @@ select {
   display: block;
   flex: 0 0 auto;
   border-radius: 18px;
-  box-shadow: 0 10px 25px rgba(14, 33, 55, 0.22);
+  box-shadow: 0 8px 20px rgba(14, 33, 55, 0.16);
   object-fit: cover;
 }
 
@@ -139,7 +147,7 @@ kbd {
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 18px;
-  background: rgba(0, 28, 53, 0.16);
+  background: rgba(0, 28, 53, 0.1);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
 }
@@ -168,11 +176,13 @@ kbd {
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 9px 24px rgba(0, 30, 58, 0.16);
+  box-shadow: 0 6px 18px rgba(0, 30, 58, 0.1);
   overflow: hidden;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
 }
-
 
 .operation-select .select-control {
   width: 178px;
@@ -180,12 +190,14 @@ kbd {
 
 .select-control:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(0, 30, 58, 0.21);
+  box-shadow: 0 8px 20px rgba(0, 30, 58, 0.13);
 }
 
 .select-control:focus-within {
   border-color: var(--btn-yellow);
-  box-shadow: 0 0 0 3px rgba(255, 201, 40, 0.20), 0 12px 28px rgba(0, 30, 58, 0.18);
+  box-shadow:
+    0 0 0 3px rgba(255, 201, 40, 0.2),
+    0 12px 28px rgba(0, 30, 58, 0.18);
 }
 
 .control-leading-icon,
@@ -241,7 +253,10 @@ textarea:focus-visible {
   border: 0;
   border-radius: 11px;
   font-weight: 750;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
 }
 
 .button:hover {
@@ -266,13 +281,21 @@ textarea:focus-visible {
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
   box-shadow: 0 9px 24px rgba(0, 30, 58, 0.14);
 }
 
 .button-secondary:hover {
   border-color: rgba(255, 255, 255, 0.36);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.12));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.12)
+  );
 }
 
 .layout-icon {
@@ -335,7 +358,7 @@ main {
   border: 1px solid rgba(177, 201, 219, 0.72);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: 0 16px 42px rgba(22, 65, 99, 0.09);
+  box-shadow: 0 10px 30px rgba(22, 65, 99, 0.06);
   overflow: hidden;
 }
 
@@ -350,7 +373,7 @@ main {
   min-height: 76px;
   padding: 15px 18px;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  background: #ffffff;
 }
 
 .editor-header > div {
@@ -426,8 +449,7 @@ textarea {
   border: 0;
   outline: 0;
   background:
-    linear-gradient(rgba(0, 92, 169, 0.024) 1px, transparent 1px),
-    #fbfdff;
+    linear-gradient(rgba(0, 92, 169, 0.018) 1px, transparent 1px), #fcfdfe;
   background-size: 100% 27px;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 13px;
@@ -442,8 +464,7 @@ textarea::placeholder {
 #outputSql {
   color: #174f42;
   background:
-    linear-gradient(rgba(20, 125, 100, 0.026) 1px, transparent 1px),
-    #fbfffd;
+    linear-gradient(rgba(20, 125, 100, 0.018) 1px, transparent 1px), #fcfefd;
   background-size: 100% 27px;
 }
 
@@ -452,7 +473,7 @@ textarea::placeholder {
   padding: 9px 17px;
   color: var(--muted);
   border-top: 1px solid var(--line);
-  background: #f9fbfc;
+  background: #fbfcfd;
   font-size: 11px;
 }
 
@@ -497,11 +518,11 @@ textarea::placeholder {
   color: #0e3353;
   background: linear-gradient(135deg, var(--btn-yellow), var(--btn-orange));
   border: 1px solid rgba(207, 127, 0, 0.15);
-  box-shadow: 0 12px 28px rgba(245, 166, 35, 0.30);
+  box-shadow: 0 8px 20px rgba(245, 166, 35, 0.2);
 }
 
 .button-primary:hover {
-  box-shadow: 0 14px 30px rgba(245, 166, 35, 0.35);
+  box-shadow: 0 10px 22px rgba(245, 166, 35, 0.24);
 }
 
 .convert-area p {
@@ -553,7 +574,9 @@ footer p {
   opacity: 0;
   transform: translateY(12px);
   pointer-events: none;
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .toast.show {
@@ -601,7 +624,6 @@ footer p {
   textarea {
     height: 330px;
   }
-
 }
 
 @media (max-width: 560px) {
@@ -657,14 +679,14 @@ footer p {
   }
 }
 
-/* v4.5.0 - Sample SELECT helper */
+/* v4.5.2 - Softer sample SELECT helper */
 .sample-panel {
-  margin-bottom: 20px;
-  padding: 16px 18px;
-  border: 1px solid rgba(177, 201, 219, 0.78);
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #e4edf3;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 32px rgba(22, 65, 99, 0.07);
+  background: rgba(250, 252, 253, 0.96);
+  box-shadow: 0 8px 24px rgba(30, 73, 105, 0.045);
 }
 
 .sample-panel[hidden] {
@@ -673,43 +695,35 @@ footer p {
 
 .sample-panel-copy {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.sample-panel-copy > div {
-  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .sample-panel-copy h2 {
-  margin-bottom: 4px;
-}
-
-.sample-panel-copy p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.55;
+  color: #49657a;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
 }
 
 .sample-badge {
   flex: 0 0 auto;
-  padding: 6px 9px;
-  color: #815400;
-  border: 1px solid rgba(245, 166, 35, 0.24);
+  padding: 5px 8px;
+  color: #5d7283;
+  border: 1px solid #dde7ed;
   border-radius: 999px;
-  background: #fff5d8;
-  font-size: 9px;
+  background: #f3f7f9;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
 .sample-query-wrap {
   position: relative;
-  border: 1px solid var(--line);
+  border: 1px solid #e6edf2;
   border-radius: 14px;
-  background: #f8fbfd;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -718,7 +732,7 @@ footer p {
   margin: 0;
   padding: 15px 148px 15px 16px;
   overflow-x: auto;
-  color: #21465f;
+  color: #36566c;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 11px;
   line-height: 1.7;
@@ -730,17 +744,23 @@ footer p {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #eef7fd;
+  color: #43667d;
+  border: 1px solid #e2ebf0;
+  background: #f7fafc;
+}
+
+.sample-copy-button:hover:not(:disabled) {
+  background: #eef5f8;
 }
 
 @media (max-width: 560px) {
   .sample-panel {
-    padding: 14px;
+    padding: 12px;
     border-radius: 15px;
   }
 
   .sample-panel-copy {
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
   }
 
