@@ -30,16 +30,8 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    radial-gradient(
-      circle at 6% 2%,
-      rgba(0, 103, 185, 0.15),
-      transparent 28rem
-    ),
-    radial-gradient(
-      circle at 96% 10%,
-      rgba(255, 201, 40, 0.18),
-      transparent 26rem
-    ),
+    radial-gradient(circle at 6% 2%, rgba(0, 103, 185, 0.15), transparent 28rem),
+    radial-gradient(circle at 96% 10%, rgba(255, 201, 40, 0.18), transparent 26rem),
     linear-gradient(180deg, #f8fbfd 0%, var(--background) 100%),
     var(--background);
   font-family: "Inter", Arial, sans-serif;
@@ -178,11 +170,9 @@ kbd {
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 9px 24px rgba(0, 30, 58, 0.16);
   overflow: hidden;
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    border-color 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
+
 
 .operation-select .select-control {
   width: 178px;
@@ -195,9 +185,7 @@ kbd {
 
 .select-control:focus-within {
   border-color: var(--btn-yellow);
-  box-shadow:
-    0 0 0 3px rgba(255, 201, 40, 0.2),
-    0 12px 28px rgba(0, 30, 58, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 201, 40, 0.20), 0 12px 28px rgba(0, 30, 58, 0.18);
 }
 
 .control-leading-icon,
@@ -253,10 +241,7 @@ textarea:focus-visible {
   border: 0;
   border-radius: 11px;
   font-weight: 750;
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .button:hover {
@@ -281,21 +266,13 @@ textarea:focus-visible {
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 14px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.16),
-    rgba(255, 255, 255, 0.08)
-  );
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
   box-shadow: 0 9px 24px rgba(0, 30, 58, 0.14);
 }
 
 .button-secondary:hover {
   border-color: rgba(255, 255, 255, 0.36);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.22),
-    rgba(255, 255, 255, 0.12)
-  );
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.12));
 }
 
 .layout-icon {
@@ -449,7 +426,8 @@ textarea {
   border: 0;
   outline: 0;
   background:
-    linear-gradient(rgba(0, 92, 169, 0.024) 1px, transparent 1px), #fbfdff;
+    linear-gradient(rgba(0, 92, 169, 0.024) 1px, transparent 1px),
+    #fbfdff;
   background-size: 100% 27px;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 13px;
@@ -464,7 +442,8 @@ textarea::placeholder {
 #outputSql {
   color: #174f42;
   background:
-    linear-gradient(rgba(20, 125, 100, 0.026) 1px, transparent 1px), #fbfffd;
+    linear-gradient(rgba(20, 125, 100, 0.026) 1px, transparent 1px),
+    #fbfffd;
   background-size: 100% 27px;
 }
 
@@ -518,7 +497,7 @@ textarea::placeholder {
   color: #0e3353;
   background: linear-gradient(135deg, var(--btn-yellow), var(--btn-orange));
   border: 1px solid rgba(207, 127, 0, 0.15);
-  box-shadow: 0 12px 28px rgba(245, 166, 35, 0.3);
+  box-shadow: 0 12px 28px rgba(245, 166, 35, 0.30);
 }
 
 .button-primary:hover {
@@ -574,9 +553,7 @@ footer p {
   opacity: 0;
   transform: translateY(12px);
   pointer-events: none;
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 .toast.show {
@@ -624,6 +601,7 @@ footer p {
   textarea {
     height: 330px;
   }
+
 }
 
 @media (max-width: 560px) {
