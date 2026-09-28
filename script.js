@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "4.4.0";
+const APP_VERSION = "4.5.0";
 
 const elements = {
   tableType: document.getElementById("tableType"),
@@ -17,6 +17,10 @@ const elements = {
   clearButton: document.getElementById("clearButton"),
   copyButton: document.getElementById("copyButton"),
   toast: document.getElementById("toast"),
+  samplePanel: document.getElementById("samplePanel"),
+  sampleSql: document.getElementById("sampleSql"),
+  sampleHint: document.getElementById("sampleHint"),
+  copySampleButton: document.getElementById("copySampleButton"),
 };
 
 const AUDIT_COLUMNS = new Set([
@@ -265,6 +269,81 @@ function parseInsertStatements(sql) {
   return statements;
 }
 
+function splitDelimitedLine(line, delimiter) {
+  if (delimiter === "\t") return line.split("\t");
+
+  const values = [];
+  let buffer = "";
+  let quoted = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+
+    if (char === '"') {
+      if (quoted && next === '"') {
+        buffer += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+      continue;
+    }
+
+    if (char === delimiter && !quoted) {
+      values.push(buffer);
+      buffer = "";
+      continue;
+    }
+
+    buffer += char;
+  }
+
+  values.push(buffer);
+  return values;
+}
+
+function detectTabularDelimiter(line) {
+  if (line.includes("\t")) return "\t";
+  if (line.includes("|")) return "|";
+  if (line.includes(",")) return ",";
+  return null;
+}
+
+const TABULAR_NUMERIC_COLUMNS = {
+  SERVER_PORT: new Set(["PORT"]),
+  PARAM_MAP: new Set(["SEQ"]),
+  MAPPING_GROUP: new Set(["ID"]),
+  MAPPING_GROUP_LINE: new Set(["MAPPING_GROUP_ID", "SEQ"]),
+  CLIENT_TARGET: new Set(["SEQ", "WEIGHT"]),
+  CHARGES: new Set([
+    "C1_VALUE",
+    "C2_VALUE",
+    "C3_VALUE",
+    "C4_VALUE",
+    "C5_VALUE",
+  ]),
+};
+
+function tabularValueToSqlLiteral(value, tableName, columnName) {
+  const raw = String(value ?? "").replace(/\r$/, "");
+  const trimmed = raw.trim();
+
+  if (trimmed === "") return "''";
+  if (/^(?:NULL|\[NULL\]|<NULL>|\(NULL\))$/i.test(trimmed)) return "NULL";
+  if (/^'(?:[^']|'')*'$/.test(trimmed)) return trimmed;
+
+  const numericColumns = TABULAR_NUMERIC_COLUMNS[tableName];
+  if (
+    numericColumns?.has(columnName) &&
+    /^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  return `'${raw.replace(/'/g, "''")}'`;
+}
+
 function createRow(statement) {
   return statement.columns.reduce((row, column, index) => {
     row[column] = statement.values[index];
@@ -410,6 +489,167 @@ const CHARGES_COLUMNS = [
   "C5_ACCOUNT",
 ];
 
+const SAMPLE_SELECTS = {
+  SERVER_PORT: [
+    "SELECT ADAPTOR_ID, PORT, SERVER, GROUP FROM MWCONFIG.SERVER_PORT WHERE ADAPTOR_ID LIKE '%ISI_ADAPTOR_ID%';",
+  ],
+  ROUTING_TABLE: [
+    "SELECT CODE_START, CODE_END, CHANNEL, QUEUE, STATUS, SUBCODEX, REPLY_TO, REPLY_TO_QMGR FROM MWCONFIG.ROUTING_TABLE WHERE CHANNEL LIKE '%ISI_CHANNEL%' AND CODE_START LIKE '%ISI_CODE_START%' AND CODE_END LIKE '%ISI_CODE_END%';",
+  ],
+  PARAM_MAP: [
+    "SELECT GROUP, NAME, VALUE, DESCRIPTION, SEQ FROM MWCONFIG.PARAM_MAP WHERE GROUP LIKE '%ISI_GROUP%' AND NAME LIKE '%ISI_NAME%';",
+  ],
+  MAPPING_COMBINE: [
+    "SELECT ID, DESCRIPTION, MODULE FROM MWCONFIG.MAPPING WHERE ID LIKE '%ISI_MAPPING_ID%';",
+    "SELECT MAPPING_ID, ID, SOURCE, TARGET, INCLUDE_MAPPING_ID, INCLUDE_ID FROM MWCONFIG.MAPPING_GROUP WHERE MAPPING_ID LIKE '%ISI_MAPPING_ID%' AND CAST(ID AS VARCHAR(20)) LIKE '%ISI_GROUP_ID%';",
+    "SELECT MAPPING_ID, MAPPING_GROUP_ID, NAME, TEXT, SEQ FROM MWCONFIG.MAPPING_GROUP_LINE WHERE MAPPING_ID LIKE '%ISI_MAPPING_ID%' AND CAST(MAPPING_GROUP_ID AS VARCHAR(20)) LIKE '%ISI_GROUP_ID%' AND NAME LIKE '%ISI_NAME%';",
+  ],
+  ERROR_MAP: [
+    "SELECT GROUP, ORIGINAL, TARGET, DETAIL FROM MWCONFIG.ERROR_MAP WHERE GROUP LIKE '%ISI_GROUP%' AND ORIGINAL LIKE '%ISI_ORIGINAL%';",
+  ],
+  DTREE: [
+    "SELECT GROUP, PATH, VALUE, MODULE FROM MWCONFIG.DTREE WHERE GROUP LIKE '%ISI_GROUP%' AND PATH LIKE '%ISI_PATH%';",
+  ],
+  DEV_TELLER_MAP: [
+    "SELECT GROUP, DEVICE_ID, DEVICE_NAME, TERMINAL_ID, TERMINAL_IP, TELLER_ID, CTRL_UNIT_ID FROM MWCONFIG.DEV_TELLER_MAP WHERE GROUP LIKE '%ISI_GROUP%' AND DEVICE_ID LIKE '%ISI_DEVICE_ID%';",
+  ],
+  CLIENT_TARGET: [
+    "SELECT CLIENT_ID, ID, HOST, SEQ, WEIGHT FROM MWCONFIG.CLIENT_TARGET WHERE CLIENT_ID LIKE '%ISI_CLIENT_ID%' AND ID LIKE '%ISI_ID%';",
+  ],
+  CHARGES: [
+    `SELECT ${CHARGES_COLUMNS.join(", ")} FROM MWCONFIG.CHARGES WHERE ID LIKE '%ISI_ID%';`,
+  ],
+};
+
+function getExpectedTabularSchemas(selectedTable) {
+  if (selectedTable === "MAPPING_COMBINE") {
+    return Object.entries(MAPPING_RULES).map(([tableName, rule]) => ({
+      tableName,
+      requiredColumns: rule.columns,
+    }));
+  }
+
+  const schemas = {
+    SERVER_PORT: TABLE_RULES.SERVER_PORT.columns,
+    ROUTING_TABLE: ROUTING_TABLE_COLUMNS,
+    PARAM_MAP: PARAM_MAP_COLUMNS,
+    ERROR_MAP: ERROR_MAP_COLUMNS,
+    DTREE: DTREE_OUTPUT_COLUMNS,
+    DEV_TELLER_MAP: DEV_TELLER_MAP_COLUMNS,
+    CLIENT_TARGET: CLIENT_TARGET_COLUMNS,
+    CHARGES: CHARGES_COLUMNS,
+  };
+
+  const columns = schemas[selectedTable];
+  return columns
+    ? [{ tableName: selectedTable, requiredColumns: columns }]
+    : [];
+}
+
+function matchTabularHeader(fields, selectedTable) {
+  const normalized = fields.map(normalizeIdentifier);
+  const headerSet = new Set(normalized);
+
+  const match = getExpectedTabularSchemas(selectedTable).find(
+    ({ requiredColumns }) =>
+      requiredColumns.every((column) => headerSet.has(column)),
+  );
+
+  if (!match) return null;
+  return {
+    tableName: match.tableName,
+    columns: normalized,
+  };
+}
+
+function parseTabularResult(input, selectedTable) {
+  const lines = String(input).replace(/\r\n?/g, "\n").split("\n");
+  const statements = [];
+  let activeHeader = null;
+  let delimiter = null;
+
+  for (const originalLine of lines) {
+    if (!originalLine.trim()) continue;
+
+    if (!delimiter) {
+      delimiter = detectTabularDelimiter(originalLine);
+      if (!delimiter) continue;
+    }
+
+    const fields = splitDelimitedLine(originalLine, delimiter);
+    const headerMatch = matchTabularHeader(fields, selectedTable);
+    if (headerMatch) {
+      activeHeader = headerMatch;
+      continue;
+    }
+
+    if (!activeHeader) continue;
+
+    // Header dapat berulang saat beberapa hasil SELECT dicopy sekaligus.
+    const normalizedFields = fields.map(normalizeIdentifier);
+    if (
+      normalizedFields.length === activeHeader.columns.length &&
+      normalizedFields.every(
+        (field, index) => field === activeHeader.columns[index],
+      )
+    ) {
+      continue;
+    }
+
+    while (fields.length < activeHeader.columns.length) fields.push("");
+    if (fields.length > activeHeader.columns.length) {
+      throw new Error(
+        `${activeHeader.tableName}: jumlah nilai hasil SELECT lebih banyak dari jumlah kolom header.`,
+      );
+    }
+
+    statements.push({
+      tableReference: `MWCONFIG.${activeHeader.tableName}`,
+      tableName: activeHeader.tableName,
+      columns: activeHeader.columns,
+      values: fields.map((value, index) =>
+        tabularValueToSqlLiteral(
+          value,
+          activeHeader.tableName,
+          activeHeader.columns[index],
+        ),
+      ),
+      sourceType: "TABULAR",
+    });
+  }
+
+  if (!statements.length) {
+    throw new Error(
+      "Hasil SELECT belum dikenali. Copy header kolom beserta row data dari database, lalu tempel ke Data Input.",
+    );
+  }
+
+  return statements;
+}
+
+function parseInputData(input, selectedTable) {
+  if (/\bINSERT\s+INTO\b/i.test(input)) return parseInsertStatements(input);
+  return parseTabularResult(input, selectedTable);
+}
+
+function updateSamplePanel() {
+  const table = elements.tableType.value;
+  const samples = SAMPLE_SELECTS[table];
+
+  if (!samples || UNAVAILABLE_TABLES.has(table)) {
+    elements.samplePanel.hidden = true;
+    elements.sampleSql.textContent = "";
+    return;
+  }
+
+  elements.samplePanel.hidden = false;
+  elements.sampleSql.textContent = samples.join("\n");
+  elements.sampleHint.textContent =
+    table === "MAPPING_COMBINE"
+      ? "Ganti keyword di dalam LIKE. Untuk MAPPING_COMBINE cukup gunakan 1 sample MAPPING, 1 MAPPING_GROUP, dan 1 MAPPING_GROUP_LINE sesuai data yang dicari."
+      : "Ganti keyword di dalam LIKE sesuai data yang ingin dicari, jalankan query, lalu copy header + rows hasilnya ke Data Input.";
+}
+
 function getRule(statement, selectedTable) {
   if (selectedTable === "MAPPING_COMBINE") {
     const rule = MAPPING_RULES[statement.tableName];
@@ -473,14 +713,14 @@ function rowValueOrDefault(row, column, defaultValue = "''") {
 }
 
 function normalizeWholeNumber(value) {
-  if (isSqlNull(value)) return "0";
+  if (isSqlNull(value)) return "NULL";
   const raw = String(value).trim();
   if (/^[+-]?\d+\.0+$/.test(raw)) return raw.replace(/\.0+$/, "");
   return raw;
 }
 
 function chargeTextValue(value) {
-  return isSqlNull(value) ? "''" : quoteProcedureValue(value);
+  return quoteProcedureValue(value);
 }
 
 function chargeNumericValue(row, index) {
@@ -502,7 +742,7 @@ function convertInsert(statement, selectedTable, rule, columns) {
     if (statement.tableName === "MAPPING") {
       return formatCall("MERGE_MAPPING", [
         quoteProcedureValue(row.ID),
-        quoteProcedureValue(row.DESCRIPTION, { emptyAsNull: true }),
+        quoteProcedureValue(row.DESCRIPTION),
         quoteProcedureValue(row.MODULE),
       ]);
     }
@@ -522,7 +762,6 @@ function convertInsert(statement, selectedTable, rule, columns) {
         columns.map((column) =>
           quoteProcedureValue(row[column], {
             alwaysQuote: true,
-            quoteNull: true,
           }),
         ),
       );
@@ -587,7 +826,7 @@ function convertRoutingTable(statement, operation) {
   }
 
   if (operation === "UPDATE") {
-    return `UPDATE MWCONFIG.ROUTING_TABLE SET QUEUE = ${quoteProcedureValue(row.QUEUE)}, STATUS = ${quoteProcedureValue(row.STATUS)}, SUBCODEX = ${valueOrEmptyString(row.SUBCODEX)}, REPLY_TO = ${quoteProcedureValue(row.REPLY_TO)}, REPLY_TO_QMGR = ${quoteProcedureValue(row.REPLY_TO_QMGR)}, MODIFIED_BY = CURRENT USER, MODIFIED_DATE = CURRENT TIMESTAMP WHERE ${where};`;
+    return `UPDATE MWCONFIG.ROUTING_TABLE SET QUEUE = ${quoteProcedureValue(row.QUEUE)}, STATUS = ${quoteProcedureValue(row.STATUS)}, SUBCODEX = ${quoteProcedureValue(row.SUBCODEX)}, REPLY_TO = ${quoteProcedureValue(row.REPLY_TO)}, REPLY_TO_QMGR = ${quoteProcedureValue(row.REPLY_TO_QMGR)}, MODIFIED_BY = CURRENT USER, MODIFIED_DATE = CURRENT TIMESTAMP WHERE ${where};`;
   }
 
   if (operation === "DELETE") {
@@ -626,7 +865,7 @@ function convertParamMapSpecial(statement, operation) {
   }
 
   if (operation === "UPDATE") {
-    return `UPDATE MWCONFIG.PARAM_MAP SET VALUE = ${quoteProcedureValue(row.VALUE)}, DESCRIPTION = ${valueOrEmptyString(row.DESCRIPTION)}, SEQ = ${valueOrBlank(row.SEQ)} WHERE ${where};`;
+    return `UPDATE MWCONFIG.PARAM_MAP SET VALUE = ${quoteProcedureValue(row.VALUE)}, DESCRIPTION = ${quoteProcedureValue(row.DESCRIPTION)}, SEQ = ${quoteProcedureValue(row.SEQ)} WHERE ${where};`;
   }
 
   if (operation === "DELETE") {
@@ -640,8 +879,8 @@ function convertParamMapSpecial(statement, operation) {
       quoteProcedureValue(row.GROUP),
       quoteProcedureValue(row.NAME),
       quoteProcedureValue(row.VALUE),
-      valueOrBlank(row.SEQ),
-      valueOrEmptyString(row.DESCRIPTION),
+      quoteProcedureValue(row.SEQ),
+      quoteProcedureValue(row.DESCRIPTION),
     ],
     true,
   );
@@ -658,7 +897,7 @@ function convertErrorMap(statement, operation) {
   }
 
   if (operation === "UPDATE") {
-    return `UPDATE MWCONFIG.ERROR_MAP SET TARGET = ${quoteProcedureValue(row.TARGET)}, DETAIL = ${valueOrEmptyString(row.DETAIL)}, MODIFIED_BY = CURRENT USER, TIMESTAMP = CURRENT TIMESTAMP WHERE ${where};`;
+    return `UPDATE MWCONFIG.ERROR_MAP SET TARGET = ${quoteProcedureValue(row.TARGET)}, DETAIL = ${quoteProcedureValue(row.DETAIL)}, MODIFIED_BY = CURRENT USER, TIMESTAMP = CURRENT TIMESTAMP WHERE ${where};`;
   }
 
   if (operation === "DELETE") {
@@ -671,7 +910,7 @@ function convertErrorMap(statement, operation) {
       quoteProcedureValue(row.GROUP),
       quoteProcedureValue(row.ORIGINAL),
       quoteProcedureValue(row.TARGET),
-      valueOrEmptyString(row.DETAIL),
+      quoteProcedureValue(row.DETAIL),
     ],
     true,
   );
@@ -744,7 +983,7 @@ function convertClientTarget(statement, operation) {
   }
 
   if (operation === "UPDATE") {
-    return `UPDATE MWCONFIG.CLIENT_TARGET SET HOST = ${quoteProcedureValue(row.HOST)}, SEQ = ${quoteProcedureValue(row.SEQ)}, WEIGHT = ${valueOrBlank(row.WEIGHT)} WHERE ${where};`;
+    return `UPDATE MWCONFIG.CLIENT_TARGET SET HOST = ${quoteProcedureValue(row.HOST)}, SEQ = ${quoteProcedureValue(row.SEQ)}, WEIGHT = ${quoteProcedureValue(row.WEIGHT)} WHERE ${where};`;
   }
 
   if (operation === "DELETE") {
@@ -758,7 +997,7 @@ function convertClientTarget(statement, operation) {
       quoteProcedureValue(row.ID),
       quoteProcedureValue(row.HOST),
       quoteProcedureValue(row.SEQ),
-      valueOrBlank(row.WEIGHT),
+      quoteProcedureValue(row.WEIGHT),
     ],
     true,
   );
@@ -881,7 +1120,7 @@ function convertSql(sql, selectedTable, operation = "INSERT") {
     throw new Error(unavailableTableMessage(selectedTable));
   }
 
-  const statements = parseInsertStatements(sql);
+  const statements = parseInputData(sql, selectedTable);
   const normalizedOperation = String(operation || "INSERT").toUpperCase();
   const allowedOperations = new Set(["INSERT", "SELECT", "UPDATE", "DELETE"]);
 
@@ -911,7 +1150,7 @@ function updateInputStats() {
 
   if (value.trim()) {
     try {
-      rowCount = parseInsertStatements(value).length;
+      rowCount = parseInputData(value, elements.tableType.value).length;
     } catch (_error) {
       rowCount = 0;
     }
@@ -1000,6 +1239,25 @@ async function copyOutput() {
   showToast("Hasil berhasil disalin");
 }
 
+async function copySampleSql() {
+  const sample = elements.sampleSql.textContent.trim();
+  if (!sample) return;
+
+  try {
+    await navigator.clipboard.writeText(sample);
+  } catch (_error) {
+    const range = document.createRange();
+    range.selectNodeContents(elements.sampleSql);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand("copy");
+    selection.removeAllRanges();
+  }
+
+  showToast("Sample SELECT berhasil disalin");
+}
+
 function clearEditors() {
   elements.inputSql.value = "";
   elements.outputSql.value = "";
@@ -1027,10 +1285,13 @@ function toggleLayout() {
 elements.inputSql.addEventListener("input", updateInputStats);
 elements.convertButton.addEventListener("click", () => handleConvert());
 elements.copyButton.addEventListener("click", copyOutput);
+elements.copySampleButton.addEventListener("click", copySampleSql);
 elements.clearButton.addEventListener("click", clearEditors);
 elements.layoutButton.addEventListener("click", toggleLayout);
 elements.tableType.addEventListener("change", () => {
   const selectedTable = elements.tableType.value;
+  updateSamplePanel();
+  updateInputStats();
 
   if (UNAVAILABLE_TABLES.has(selectedTable)) {
     elements.outputSql.value = "";
@@ -1053,11 +1314,14 @@ document.addEventListener("keydown", (event) => {
 
 document.documentElement.dataset.appVersion = APP_VERSION;
 updateInputStats();
+updateSamplePanel();
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     splitSqlAware,
     parseInsertStatements,
+    parseTabularResult,
+    parseInputData,
     convertSql,
   };
 }

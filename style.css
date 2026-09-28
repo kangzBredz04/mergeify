@@ -678,3 +678,102 @@ footer p {
     text-align: center;
   }
 }
+
+/* v4.5.0 - Sample SELECT helper */
+.sample-panel {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border: 1px solid rgba(177, 201, 219, 0.78);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 32px rgba(22, 65, 99, 0.07);
+}
+
+.sample-panel[hidden] {
+  display: none;
+}
+
+.sample-panel-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sample-panel-copy > div {
+  min-width: 0;
+}
+
+.sample-panel-copy h2 {
+  margin-bottom: 4px;
+}
+
+.sample-panel-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.sample-badge {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  color: #815400;
+  border: 1px solid rgba(245, 166, 35, 0.24);
+  border-radius: 999px;
+  background: #fff5d8;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.sample-query-wrap {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fbfd;
+  overflow: hidden;
+}
+
+#sampleSql {
+  min-height: 58px;
+  margin: 0;
+  padding: 15px 148px 15px 16px;
+  overflow-x: auto;
+  color: #21465f;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sample-copy-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #eef7fd;
+}
+
+@media (max-width: 560px) {
+  .sample-panel {
+    padding: 14px;
+    border-radius: 15px;
+  }
+
+  .sample-panel-copy {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #sampleSql {
+    padding: 14px;
+    padding-top: 54px;
+    font-size: 10px;
+  }
+
+  .sample-copy-button {
+    left: 10px;
+    right: auto;
+  }
+}

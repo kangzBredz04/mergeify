@@ -28,7 +28,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=4.4.0" />
+    <link rel="stylesheet" href="style.css?v=4.5.0" />
   </head>
   <body>
     <div class="page-shell">
@@ -131,6 +131,36 @@
       </header>
 
       <main>
+        <section
+          id="samplePanel"
+          class="sample-panel"
+          aria-label="Sample query SELECT"
+        >
+          <div class="sample-panel-copy">
+            <span class="sample-badge">SAMPLE SELECT</span>
+            <div>
+              <h2>Query Pengambilan Data</h2>
+              <p id="sampleHint">
+                Ganti keyword di dalam LIKE sesuai data yang ingin dicari, lalu
+                copy hasil query dari database ke Data Input.
+              </p>
+            </div>
+          </div>
+          <div class="sample-query-wrap">
+            <pre id="sampleSql" aria-live="polite"></pre>
+            <button
+              id="copySampleButton"
+              class="text-button sample-copy-button"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8h11v11H8zM5 16H4V5h11v1" />
+              </svg>
+              <span>Salin Sample</span>
+            </button>
+          </div>
+        </section>
+
         <section id="editorGrid" class="editor-grid">
           <article class="editor-card">
             <div class="editor-header">
@@ -138,7 +168,7 @@
                 <span class="step-number">01</span>
                 <div class="editor-title">
                   <h2>Data Input</h2>
-                  <p>Masukkan data yang ingin dikonversi</p>
+                  <p>Tempel hasil SELECT (header + rows) atau SQL INSERT</p>
                 </div>
               </div>
               <button id="clearButton" class="text-button" type="button">
@@ -152,7 +182,7 @@
               id="inputSql"
               spellcheck="false"
               autocomplete="off"
-              placeholder="Masukkan data yang ingin dikonversi di sini..."
+              placeholder="Tempel hasil query SELECT (header + rows) atau SQL INSERT di sini..."
               aria-label="Data yang ingin dikonversi"
             ></textarea>
             <div class="editor-footer">
@@ -228,6 +258,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <!-- Vercel Web Analytics: aktif setelah fitur Analytics dinyalakan di dashboard Vercel. -->
     <script defer src="/_vercel/insights/script.js"></script>
-    <script src="script.js?v=4.4.0"></script>
+    <script src="script.js?v=4.5.0"></script>
   </body>
 </html>
