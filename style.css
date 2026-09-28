@@ -775,3 +775,234 @@ footer p {
     right: auto;
   }
 }
+
+/* v4.6.0 - Light / dark theme */
+html,
+body,
+.app-header,
+.header-actions,
+.editor-card,
+.editor-header,
+.editor-footer,
+textarea,
+#outputSql,
+.sample-panel,
+.sample-query-wrap,
+.select-control,
+kbd,
+footer,
+.text-button,
+.theme-toggle {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.theme-toggle {
+  min-width: 132px;
+}
+
+.theme-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--btn-navy);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.theme-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-icon-moon {
+  display: none;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --btn-navy: #9fd3ff;
+  --btn-blue: #74bfff;
+  --btn-sky: #172b3a;
+  --ink: #dceaf4;
+  --muted: #91a8b9;
+  --line: #2a3e4d;
+  --surface: rgba(19, 31, 41, 0.98);
+  --background: #0b141b;
+  --danger: #ff8f9d;
+  --success: #62d1ae;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(40, 112, 160, 0.16),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 96% 8%,
+      rgba(255, 201, 40, 0.07),
+      transparent 24rem
+    ),
+    linear-gradient(180deg, #0e1921 0%, var(--background) 100%),
+    var(--background);
+}
+
+html[data-theme="dark"] .app-header {
+  border-color: rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(118deg, rgba(14, 50, 75, 0.98), rgba(20, 69, 100, 0.96)),
+    #102d43;
+}
+
+html[data-theme="dark"] .header-actions {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(3, 16, 25, 0.22);
+}
+
+html[data-theme="dark"] .select-control {
+  color: #9fd3ff;
+  border-color: #334c5f;
+  background: #14232e;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] select {
+  color: #dceaf4;
+}
+
+html[data-theme="dark"] .button-secondary {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+html[data-theme="dark"] .theme-icon {
+  color: #ffd66b;
+  background: #20313d;
+}
+
+html[data-theme="dark"] .theme-icon-sun {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-icon-moon {
+  display: block;
+}
+
+html[data-theme="dark"] .editor-card {
+  border-color: #263b4a;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="dark"] .editor-header,
+html[data-theme="dark"] .editor-footer {
+  background: #111f29;
+}
+
+html[data-theme="dark"] .step-number {
+  color: #9fd3ff;
+  background: #173247;
+}
+
+html[data-theme="dark"] .result-card .step-number {
+  color: #ffd77b;
+  background: #3c321d;
+}
+
+html[data-theme="dark"] textarea {
+  color: #d6e5ef;
+  background:
+    linear-gradient(rgba(116, 191, 255, 0.035) 1px, transparent 1px), #0e1a22;
+  background-size: 100% 27px;
+}
+
+html[data-theme="dark"] #outputSql {
+  color: #9be0c8;
+  background:
+    linear-gradient(rgba(98, 209, 174, 0.035) 1px, transparent 1px), #0d1b1b;
+  background-size: 100% 27px;
+}
+
+html[data-theme="dark"] textarea::placeholder {
+  color: #61798a;
+}
+
+html[data-theme="dark"] .sample-panel {
+  border-color: #263b4a;
+  background: rgba(15, 26, 34, 0.97);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="dark"] .sample-panel-copy h2 {
+  color: #9cb3c3;
+}
+
+html[data-theme="dark"] .sample-badge {
+  color: #9cb3c3;
+  border-color: #314858;
+  background: #162731;
+}
+
+html[data-theme="dark"] .sample-query-wrap {
+  border-color: #263b4a;
+  background: #0d1921;
+}
+
+html[data-theme="dark"] #sampleSql {
+  color: #b9cfdd;
+}
+
+html[data-theme="dark"] .sample-copy-button {
+  color: #9fd3ff;
+  border-color: #304858;
+  background: #162630;
+}
+
+html[data-theme="dark"] .sample-copy-button:hover:not(:disabled),
+html[data-theme="dark"] .text-button:hover:not(:disabled) {
+  background: #1a3040;
+}
+
+html[data-theme="dark"] kbd {
+  color: #b7cbd8;
+  border-color: #3b5262;
+  background: #15242e;
+}
+
+html[data-theme="dark"] footer {
+  color: #7890a1;
+  border-top-color: #263946;
+}
+
+html[data-theme="dark"] footer p {
+  color: #9fd3ff;
+}
+
+html[data-theme="dark"] .toast {
+  background: #203a4b;
+}
+
+@media (max-width: 900px) {
+  .theme-toggle {
+    flex: 1 1 150px;
+  }
+}
+
+@media (max-width: 560px) {
+  .theme-toggle {
+    width: 100%;
+  }
+}

@@ -28,7 +28,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=4.5.2" />
+    <link rel="stylesheet" href="style.css?v=4.6.0" />
   </head>
   <body>
     <div class="page-shell">
@@ -125,6 +125,32 @@
             <span class="control-copy">
               <strong>Ubah Layout</strong>
               <small id="layoutModeLabel">Posisi kiri–kanan</small>
+            </span>
+          </button>
+
+          <button
+            id="themeButton"
+            class="button button-secondary theme-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="Ganti tema tampilan"
+          >
+            <span class="theme-icon" aria-hidden="true">
+              <svg class="theme-icon-sun" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4" />
+                <path
+                  d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+                />
+              </svg>
+              <svg class="theme-icon-moon" viewBox="0 0 24 24">
+                <path
+                  d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"
+                />
+              </svg>
+            </span>
+            <span class="control-copy">
+              <strong>Tema</strong>
+              <small id="themeModeLabel">Terang</small>
             </span>
           </button>
         </div>
@@ -252,6 +278,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <!-- Vercel Web Analytics: aktif setelah fitur Analytics dinyalakan di dashboard Vercel. -->
     <script defer src="/_vercel/insights/script.js"></script>
-    <script src="script.js?v=4.5.2"></script>
+    <script src="script.js?v=4.6.0"></script>
   </body>
 </html>

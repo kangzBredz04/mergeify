@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "4.5.2";
+const APP_VERSION = "4.6.0";
 
 const elements = {
   tableType: document.getElementById("tableType"),
@@ -20,6 +20,8 @@ const elements = {
   samplePanel: document.getElementById("samplePanel"),
   sampleSql: document.getElementById("sampleSql"),
   copySampleButton: document.getElementById("copySampleButton"),
+  themeButton: document.getElementById("themeButton"),
+  themeModeLabel: document.getElementById("themeModeLabel"),
 };
 
 const AUDIT_COLUMNS = new Set([
@@ -35,6 +37,46 @@ const AUDIT_COLUMNS = new Set([
 ]);
 
 let toastTimer;
+
+const THEME_STORAGE_KEY = "mw-forge-theme";
+
+function getInitialTheme() {
+  const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function applyTheme(theme, persist = false) {
+  const normalizedTheme = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = normalizedTheme;
+
+  if (elements.themeButton) {
+    const isDark = normalizedTheme === "dark";
+    elements.themeButton.setAttribute("aria-pressed", String(isDark));
+    elements.themeButton.setAttribute(
+      "aria-label",
+      isDark ? "Ganti ke tema terang" : "Ganti ke tema gelap",
+    );
+  }
+
+  if (elements.themeModeLabel) {
+    elements.themeModeLabel.textContent =
+      normalizedTheme === "dark" ? "Gelap" : "Terang";
+  }
+
+  if (persist) {
+    window.localStorage.setItem(THEME_STORAGE_KEY, normalizedTheme);
+  }
+}
+
+function toggleTheme() {
+  const nextTheme =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme, true);
+  showToast(nextTheme === "dark" ? "Tema gelap aktif" : "Tema terang aktif");
+}
 
 function normalizeIdentifier(identifier) {
   return String(identifier || "")
@@ -1283,6 +1325,7 @@ elements.copyButton.addEventListener("click", copyOutput);
 elements.copySampleButton.addEventListener("click", copySampleSql);
 elements.clearButton.addEventListener("click", clearEditors);
 elements.layoutButton.addEventListener("click", toggleLayout);
+elements.themeButton?.addEventListener("click", toggleTheme);
 elements.tableType.addEventListener("change", () => {
   const selectedTable = elements.tableType.value;
   updateSamplePanel();
@@ -1308,6 +1351,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.documentElement.dataset.appVersion = APP_VERSION;
+applyTheme(getInitialTheme());
 updateInputStats();
 updateSamplePanel();
 
